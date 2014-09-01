@@ -1,4 +1,5 @@
 import ast
+import re
 
 class Compiler:
     def __init__(self, path):

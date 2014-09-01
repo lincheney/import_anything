@@ -1,3 +1,3 @@
-from compiler import Compiler
-from loader import Loader
-from finder import Finder
+from .compiler import Compiler
+from .loader import Loader
+from .finder import Finder
