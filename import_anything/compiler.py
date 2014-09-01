@@ -34,9 +34,11 @@ class Compiler:
         for lineno, line in enumerate(file, 1):
             yield lineno, line
     
-    def indent(self, indent, string, *args, **kwargs):
+    @staticmethod
+    def indent(indent, string, *args, **kwargs):
         return (" " * indent) + string.format(*args, **kwargs)
     
-    def strip_indents(self, string):
+    @staticmethod
+    def strip_indents(string):
         match = re.match(r"^(\s*)(.*)$", string, re.S)
         return len(match.group(1)), match.group(2)
