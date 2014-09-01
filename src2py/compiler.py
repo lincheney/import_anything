@@ -7,7 +7,7 @@ class Compiler:
         
         lines = []
         self.line_numbers = [0]
-        for lineno, line in self.compile(file):
+        for lineno, line in self.translate(file):
             for i, l in enumerate(line.split('\n'), lineno):
                 self.line_numbers.append(i)
                 lines.append(l)
@@ -30,13 +30,13 @@ class Compiler:
         for lineno, line in enumerate(self.data.split('\n'), 1):
             print('{:2} {}'.format(lineno, line) )
     
+    def translate(self, file):
+        for lineno, line in enumerate(file, 1):
+            yield lineno, line
+    
     def indent(self, indent, string, *args, **kwargs):
         return (" " * indent) + string.format(*args, **kwargs)
     
     def strip_indents(self, string):
         match = re.match(r"^(\s*)(.*)$", string, re.S)
         return len(match.group(1)), match.group(2)
-    
-    def compile(self, file):
-        for lineno, line in enumerate(file, 1):
-            yield lineno, line
