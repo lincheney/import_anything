@@ -42,7 +42,7 @@ class Loader(importlib.machinery.SourceFileLoader):
         Return a Loader factory for @compiler
         """
         
-        return functools.partial(Loader, compiler = compiler)
+        return functools.partial(cls, compiler = compiler)
     
     @property
     def compiler(self):
