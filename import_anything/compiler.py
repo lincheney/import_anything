@@ -8,6 +8,8 @@ class Compiler:
     Subclasses should reimplement the .translate method
     """
     
+    MAGIC = None
+    
     def __init__(self, path):
         """
         Performs the translation on __init__

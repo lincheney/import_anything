@@ -1,6 +1,7 @@
 import importlib.machinery
 import marshal
 import functools
+import ctypes
 
 class Loader(importlib.machinery.SourceFileLoader):
     """
@@ -38,7 +39,20 @@ class Loader(importlib.machinery.SourceFileLoader):
         if path != self.path:
             # return bytecode but set the size to the original file size
             data = super().get_data(path)
-            data = data[:8] + int.to_bytes(self._size, 4, 'little') + data[12:]
+            
+            magic = data[:4]
+            mtime = data[4:8]
+            size = data[8:12]
+            code = data[12:]
+            
+            if self._compiler_cls.MAGIC is not None:
+                magic_tail = magic[2:]
+                magic = int.from_bytes(magic[:2], 'little') ^ ~self._compiler_cls.MAGIC
+                magic = ctypes.c_uint16(magic).value.to_bytes(2, 'little') + magic_tail
+            
+            size = self._size.to_bytes(4, 'little')
+            
+            data = magic + mtime + size + code
             return data
         
         # return the translated source

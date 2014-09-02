@@ -34,23 +34,62 @@ class TestLoader(unittest.TestCase):
     
     def test_get_data_cached(self):
         """
-        .get_data should modify the size in the data
+        .get_data should modify the size in data
         when retrieving cached data
         """
         
+        compiler = mock.Mock()
+        compiler.MAGIC = None
+        
         data = b'0' * 100
-        size = 10
+        _size = 10
         
         with mock.patch('importlib.machinery.SourceFileLoader.get_data', return_value = data):
-            loader = self.default_loader()
-            loader._size = size
+            loader = self.default_loader(compiler)
+            loader._size = _size
             
             result = loader.get_data('different path')
             self.assertIsInstance(result, bytes)
             
-            self.assertEqual(result[:8], data[:8])
-            self.assertEqual(int.from_bytes(result[8:12], 'little'), size)
-            self.assertEqual(result[12:], data[12:])
+            magic = result[:4]
+            mtime = result[4:8]
+            size = result[8:12]
+            code = result[12:]
+            
+            self.assertEqual(magic, data[:4])
+            self.assertEqual(mtime, data[4:8])
+            self.assertEqual(size, _size.to_bytes(4, 'little'))
+            self.assertEqual(code, data[12:])
+    
+    def test_get_data_with_magic(self):
+        """
+        .get_data should remove compiler's magic from data
+        """
+        import ctypes
+        
+        compiler = mock.Mock()
+        compiler.MAGIC = 10
+        
+        expected_magic = 100
+        data = b'0' * 100
+        # xor then stuff into an unsigned
+        magic_bytes = ctypes.c_uint16(expected_magic ^ ~compiler.MAGIC).value.to_bytes(2, 'little')
+        data = magic_bytes + data
+        
+        with mock.patch('importlib.machinery.SourceFileLoader.get_data', return_value = data):
+            loader = self.default_loader(compiler)
+            loader._size = 10
+            
+            result = loader.get_data('different path')
+            
+            # last 2 bytes are unmodified
+            self.assertEqual(result[2:4], data[2:4])
+            
+            magic = int.from_bytes(result[:2], 'little')
+            # xor then stuff into an unsigned
+            magic = ctypes.c_uint16(magic ^ ~compiler.MAGIC).value
+            magic = magic.to_bytes(2, 'little')
+            self.assertEqual(magic, data[:2])
     
     @mock.patch('builtins.compile')
     @mock.patch.object(Loader, 'compiler')
