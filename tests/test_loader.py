@@ -61,6 +61,7 @@ class TestLoaderGetData(unittest.TestCase):
     
     data = b'0' * 100
     size = 10
+    path = '/abc/def.py'
     
     def setUp(self):
         self.get_data_patch = mock.patch('importlib.machinery.SourceFileLoader.get_data', return_value = self.data)
@@ -78,7 +79,7 @@ class TestLoaderGetData(unittest.TestCase):
         .get_data should return the translated code when re-compiling
         """
         
-        result = self.loader.get_data('path')
+        result = self.loader.get_data(self.loader.path)
         self.assertIs(result, self.loader.compiler.data)
     
     def test_without_magic(self):
@@ -86,7 +87,8 @@ class TestLoaderGetData(unittest.TestCase):
         .get_data should only modify the size without magic
         """
         
-        result = self.loader.get_data('different path')
+        result = self.loader.get_data(self.path)
+        self.super_get_data.assert_called_once_with(self.path)
         
         self.assertIsInstance(result, bytes)
         self.assertEqual(result[:8], self.data[:8])
@@ -101,7 +103,8 @@ class TestLoaderGetData(unittest.TestCase):
         self.loader._compiler_cls.MAGIC = 10
         expected_magic = self.loader.apply_compiler_magic(self.data[:2]) + self.data[2:4]
         
-        result = self.loader.get_data('different path')
+        result = self.loader.get_data(self.path)
+        self.super_get_data.assert_called_once_with(self.path)
         self.assertEqual(result[:4], expected_magic)
     
     def test_with_magic_tag(self):
@@ -111,17 +114,17 @@ class TestLoaderGetData(unittest.TestCase):
         """
         
         magic_tag = 'magic-tag'
-        path = '/abc/def.py'
         magic_path = '/abc/def.{}.py'.format(magic_tag)
         
         self.loader._compiler_cls.MAGIC_TAG = magic_tag
-        result = self.loader.get_data(path)
+        result = self.loader.get_data(self.path)
         self.super_get_data.assert_called_once_with(magic_path)
 
 
 class TestLoadSetData(unittest.TestCase):
     data = b'0' * 100
     code = 'code'
+    path = '/abc/def.py'
     
     def setUp(self):
         self.set_data_patch = mock.patch('importlib.machinery.SourceFileLoader.set_data', return_value = sentinel.super_result)
@@ -137,17 +140,17 @@ class TestLoadSetData(unittest.TestCase):
         self.source_to_code_patch.stop()
     
     
-    def test_set_data_no_magic(self):
+    def test_no_magic(self):
         """
         .set_data should replace data with recompiled code
         """
         import marshal
         
-        result = self.loader.set_data('bytecode path', self.data)
-        self.super_set_data.assert_called_once_with('bytecode path', self.data[:12] + marshal.dumps(self.code))
+        result = self.loader.set_data(self.path, self.data)
+        self.super_set_data.assert_called_once_with(self.path, self.data[:12] + marshal.dumps(self.code))
         self.assertIs(result, sentinel.super_result)
     
-    def test_set_data_with_magic(self):
+    def test_with_magic(self):
         """
         .set_data should apply the compiler magic
         """
@@ -155,10 +158,23 @@ class TestLoadSetData(unittest.TestCase):
         compiler_magic = 100
         self.loader._compiler_cls.MAGIC = compiler_magic
         
-        result = self.loader.set_data('bytecode path', self.data)
+        result = self.loader.set_data(self.path, self.data)
         args = self.super_set_data.call_args[0]
-        self.assertEqual(args[0], 'bytecode path')
+        self.assertEqual(args[0], self.path)
         self.assertEqual(args[1][:2], self.loader.apply_compiler_magic(self.data[:2]))
+    
+    def test_with_magic_tag(self):
+        """
+        .set_data should apply the magic tag to the
+        path that data gets saved to
+        """
+        
+        magic_tag = 'magic-tag'
+        magic_path = '/abc/def.{}.py'.format(magic_tag)
+        
+        self.loader._compiler_cls.MAGIC_TAG = magic_tag
+        result = self.loader.set_data(self.path, self.data)
+        self.super_set_data.assert_called_once_with(magic_path, mock.ANY)
 
 
 class TestLoaderApplyCompilerMagic(unittest.TestCase):
@@ -168,7 +184,7 @@ class TestLoaderApplyCompilerMagic(unittest.TestCase):
         self.loader = default_loader()
     
     
-    def test_apply_compiler_magic_no_magic(self):
+    def test_no_magic(self):
         """
         .apply_compiler_magic should do nothing with no magic
         """
@@ -176,7 +192,7 @@ class TestLoaderApplyCompilerMagic(unittest.TestCase):
         result = self.loader.apply_compiler_magic(self.data)
         self.assertEqual(result, self.data)
     
-    def test_apply_compiler_magic_with_magic(self):
+    def test_with_magic(self):
         """
         .apply_compiler_magic should xor magic to data
         """
@@ -205,7 +221,7 @@ class TestLoaderApplyCompilerMagicTag(unittest.TestCase):
         self.loader = default_loader()
     
     
-    def test_apply_compiler_magic_tag_no_magic_tag(self):
+    def test_no_magic_tag(self):
         """
         .apply_compiler_magic_tag should do nothing with no magic tag
         """
@@ -213,7 +229,7 @@ class TestLoaderApplyCompilerMagicTag(unittest.TestCase):
         result = self.loader.apply_compiler_magic_tag(self.path)
         self.assertEqual(result, self.path)
     
-    def test_apply_compiler_magic_tag_with_magic_tag(self):
+    def test_with_magic_tag(self):
         """
         .apply_compiler_magic_tag should insert the magic tag
         into the path
