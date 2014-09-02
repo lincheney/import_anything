@@ -11,6 +11,21 @@ class Loader(importlib.machinery.SourceFileLoader):
     
     Loader.from_compiler() returns a factory that
     makes Loader with a preset compiler
+    
+    When compiler.MAGIC is set:
+        the magic number in the saved bytecode is XORed
+        with the compiler.MAGIC
+        This basically allows you to bump compiler version
+        numbers and the importer will automatically
+        recompile all the bytecode.
+    
+    When compiler.MAGIC_TAG is set:
+        instead of reading/writing bytecode at
+        /path/to/bytecode.cpython-33.pyc
+        it reads/writes at
+        /path/to/bytecode.cpython-33.{magic-tag}.pyc
+        This allows you to separate custom compiled bytecode
+        from normal python bytecode.
     """
     
     _size = None
