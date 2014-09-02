@@ -2,7 +2,13 @@ import unittest
 import unittest.mock as mock
 from import_anything import Finder
 
+import os
+
 class TestFinder(unittest.TestCase):
+    @staticmethod
+    def module_dir():
+        return os.path.dirname(__file__)
+    
     def test_meta_path(self):
         """
         Finder should be registered in sys.meta_path
@@ -11,25 +17,17 @@ class TestFinder(unittest.TestCase):
         import sys
         self.assertIn(Finder, sys.meta_path)
     
-    @mock.patch('importlib.machinery.FileFinder')
-    def test_find_module(self, file_finder):
+    def test_find_module(self):
         """
-        Finder#find_module should search for the loader
+        .find_module should find the right loader
         """
         
-        find_loader = file_finder().find_loader
-        find_loader.return_value = [None, None]
+        path = [os.path.join(self.module_dir(), 'resources')]
+        fullname = 'file'
         
-        path = ['a', 'b']
-        fullname = 'fullname'
+        loader = mock.sentinel.loader
+        loader_cls = mock.Mock(return_value = loader)
+        Finder.register(loader_cls, ['.extension'])
         
-        loader = mock.Mock()
-        Finder.register(loader, '.extension')
-        
-        Finder.find_module(fullname, path)
-        
-        for i in path:
-            # should have made a FileFinder for each path
-            file_finder.assert_any_call(i, (loader, '.extension'))
-        # should have searched for fullname
-        find_loader.assert_called_with(fullname)
+        result = Finder.find_module(fullname, path)
+        self.assertEqual(loader, result)
