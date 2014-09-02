@@ -127,7 +127,7 @@ class TestLoader(unittest.TestCase):
     @mock.patch('importlib.machinery.SourceFileLoader.set_data', return_value = sentinel.super_result)
     def test_set_data_with_magic(self, super_set_data):
         """
-        .set_data should replace data with recompiled code
+        .set_data should replace apply the compiler magic to the data
         """
         import ctypes
         
