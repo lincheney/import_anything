@@ -4,6 +4,9 @@ from unittest.mock import sentinel
 from import_anything import Loader, Compiler
 
 class TestLoader(unittest.TestCase):
+    def default_loader(self, compiler = sentinel.compiler):
+        return Loader('', 'path', compiler = compiler)
+    
     def test_from_compiler(self):
         """
         .from_compiler should subclass and set COMPILER
@@ -25,7 +28,7 @@ class TestLoader(unittest.TestCase):
         when re-compiling
         """
         
-        loader = Loader('', 'path')
+        loader = self.default_loader()
         result = loader.get_data('path')
         self.assertIs(result, compiler.data)
     
@@ -39,7 +42,7 @@ class TestLoader(unittest.TestCase):
         size = 10
         
         with mock.patch('importlib.machinery.SourceFileLoader.get_data', return_value = data):
-            loader = Loader('', 'path')
+            loader = self.default_loader()
             loader._size = size
             
             result = loader.get_data('different path')
@@ -59,7 +62,7 @@ class TestLoader(unittest.TestCase):
         
         compile.return_value = sentinel.code
         
-        loader = Loader('', 'path')
+        loader = self.default_loader()
         result = loader.source_to_code(None, sentinel.path)
         
         compile.assert_called_once_with(compiler.make_ast_tree(), sentinel.path, mock.ANY)
@@ -76,7 +79,7 @@ class TestLoader(unittest.TestCase):
         code = 'code'
         
         with mock.patch.object(Loader, 'source_to_code', return_value = code):
-            loader = Loader('', 'path')
+            loader = self.default_loader()
             result = loader.set_data('bytecode path', data)
             
             super_set_data.assert_called_once_with('bytecode path', data[:12] + marshal.dumps(code))
@@ -91,7 +94,7 @@ class TestLoader(unittest.TestCase):
         
         super_path_stats.return_value = dict(size = sentinel.size)
         
-        loader = Loader('', 'path')
+        loader = self.default_loader()
         result = loader.path_stats('some path')
         
         super_path_stats.assert_called_once_with('some path')

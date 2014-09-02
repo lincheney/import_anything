@@ -1,18 +1,24 @@
 import importlib.machinery
 import marshal
+import functools
 
 class Loader(importlib.machinery.SourceFileLoader):
     """
     Loader
     
     Loads/stores cached bytecode etc.
-    Uses the compiler that is set in self.COMPILER
+    
+    Loader.from_compiler() returns a factory that
+    makes Loader with a preset compiler
     """
     
     _size = None
     _compiler = None
     _code_object = None
-    COMPILER = None
+    
+    def __init__(self, *args, compiler, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._compiler_cls = compiler
     
     @classmethod
     def from_compiler(cls, compiler):
@@ -20,14 +26,12 @@ class Loader(importlib.machinery.SourceFileLoader):
         Return a Loader factory for @compiler
         """
         
-        class _loader(cls):
-            COMPILER = compiler
-        return _loader
+        return functools.partial(Loader, compiler = compiler)
     
     @property
     def compiler(self):
         if self._compiler is None:
-            self._compiler = self.COMPILER(self.path)
+            self._compiler = self._compiler_cls(self.path)
         return self._compiler
     
     def get_data(self, path):
