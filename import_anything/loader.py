@@ -45,9 +45,7 @@ class Loader(importlib.machinery.SourceFileLoader):
             size = data[8:12]
             code = data[12:]
             
-            if self._compiler_cls.MAGIC is not None:
-                magic = self.apply_compiler_magic(magic)
-            
+            magic = self.apply_compiler_magic(magic)
             size = self._size.to_bytes(4, 'little')
             
             data = magic + mtime + size + code
@@ -79,9 +77,7 @@ class Loader(importlib.machinery.SourceFileLoader):
         size = data[8:12]
         code = data[12:]
         
-        if self._compiler_cls.MAGIC is not None:
-            magic = self.apply_compiler_magic(magic)
-        
+        magic = self.apply_compiler_magic(magic)
         code = marshal.dumps(code_object)
         
         data = magic + mtime + size + code
@@ -98,6 +94,9 @@ class Loader(importlib.machinery.SourceFileLoader):
         XOR the (bit flipped) compiler magic with @magic
         Only applied to the first 2 bytes
         """
+        
+        if self._compiler_cls.MAGIC is None:
+            return magic
         
         tail = magic[2:]
         magic = int.from_bytes(magic[:2], 'little') ^ ~self._compiler_cls.MAGIC
