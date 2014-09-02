@@ -1,5 +1,6 @@
 import unittest
 import unittest.mock as mock
+from unittest.mock import sentinel
 from import_anything import Finder
 
 import os
@@ -25,9 +26,8 @@ class TestFinder(unittest.TestCase):
         path = [os.path.join(self.module_dir(), 'resources')]
         fullname = 'file'
         
-        loader = mock.sentinel.loader
-        loader_cls = mock.Mock(return_value = loader)
+        loader_cls = mock.Mock(return_value = sentinel.loader)
         Finder.register(loader_cls, ['.extension'])
         
         result = Finder.find_module(fullname, path)
-        self.assertEqual(loader, result)
+        self.assertEqual(sentinel.loader, result)
