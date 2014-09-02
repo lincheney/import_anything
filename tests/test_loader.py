@@ -9,7 +9,7 @@ class TestLoader(unittest.TestCase):
             compiler = mock.Mock()
             compiler.MAGIC = None
         
-        return Loader('', 'path', compiler = compiler)
+        return Loader('filename', 'path', compiler = compiler)
     
     def test_from_compiler(self):
         """
@@ -69,30 +69,21 @@ class TestLoader(unittest.TestCase):
         import ctypes
         
         compiler_magic = 10
-        expected_magic = 100
-        
-        # xor
-        magic = expected_magic ^ ~compiler_magic
-        # stuff into 16 bits
-        magic = ctypes.c_uint16(magic).value.to_bytes(2, 'little')
-        data = magic + b'0' * 100
+        data = b'0' * 100
         
         with mock.patch('importlib.machinery.SourceFileLoader.get_data', return_value = data):
             loader = self.default_loader()
             loader._size = 10
             loader._compiler_cls.MAGIC = compiler_magic
             
+            expected_magic = loader.apply_compiler_magic(data[:2]) + data[2:4]
+            
             result = loader.get_data('different path')
             
-            # last 2 bytes are unmodified
-            self.assertEqual(result[2:4], data[2:4])
-            
-            magic = int.from_bytes(result[:2], 'little')
-            self.assertEqual(magic, expected_magic)
+            self.assertEqual(result[:4], expected_magic)
     
     @mock.patch('builtins.compile')
-    @mock.patch.object(Loader, 'compiler')
-    def test_source_to_code_compiled(self, compiler, compile):
+    def test_source_to_code_compiled(self, compile):
         """
         .source_to_code should compile a code object
         when re-compiling
@@ -103,7 +94,7 @@ class TestLoader(unittest.TestCase):
         loader = self.default_loader()
         result = loader.source_to_code(None, sentinel.path)
         
-        compile.assert_called_once_with(compiler.make_ast_tree(), sentinel.path, mock.ANY)
+        compile.assert_called_once_with(loader.compiler.make_ast_tree(), sentinel.path, mock.ANY)
         self.assertIs(result, sentinel.code)
     
     @mock.patch('importlib.machinery.SourceFileLoader.set_data', return_value = sentinel.super_result)
@@ -127,20 +118,18 @@ class TestLoader(unittest.TestCase):
     @mock.patch('importlib.machinery.SourceFileLoader.set_data', return_value = sentinel.super_result)
     def test_set_data_with_magic(self, super_set_data):
         """
-        .set_data should replace apply the compiler magic to the data
+        .set_data should apply the compiler magic to the data
         """
         import ctypes
         
         compiler_magic = 100
         data = b'0' * 100
-        # xor
-        expected_magic = int.from_bytes(data[:2], 'little') ^ ~compiler_magic
-        # stuff into unsigned 16 bits
-        expected_magic = ctypes.c_uint16(expected_magic).value.to_bytes(2, 'little')
         
         with mock.patch.object(Loader, 'source_to_code', return_value = 'code'):
             loader = self.default_loader()
             loader._compiler_cls.MAGIC = compiler_magic
+            
+            expected_magic = loader.apply_compiler_magic(data[:2])
             
             result = loader.set_data('bytecode path', data)
             
@@ -161,3 +150,35 @@ class TestLoader(unittest.TestCase):
         
         super_path_stats.assert_called_once_with('some path')
         self.assertEqual(loader._size, sentinel.size)
+    
+    def test_apply_compiler_magic_no_magic(self):
+        """
+        .apply_compiler_magic should do nothing with no magic
+        """
+        
+        data = b'0' * 100
+        
+        loader = self.default_loader()
+        loader._compiler_cls.MAGIC = None
+        
+        result = loader.apply_compiler_magic(data)
+        self.assertEqual(result, data)
+    
+    def test_apply_compiler_magic_with_magic(self):
+        """
+        .apply_compiler_magic should xor magic to data
+        """
+        import ctypes
+        
+        compiler_magic = 10
+        data = b'0' * 100
+        
+        magic_data = int.from_bytes(data[:2], 'little') ^ ~compiler_magic
+        magic_data = ctypes.c_uint16(magic_data).value.to_bytes(2, 'little')
+        magic_data = magic_data + data[2:]
+        
+        loader = self.default_loader()
+        loader._compiler_cls.MAGIC = compiler_magic
+        
+        result = loader.apply_compiler_magic(data)
+        self.assertEqual(result, magic_data)
