@@ -2,6 +2,13 @@ import importlib.machinery
 import sys
 
 class Finder(importlib.machinery.PathFinder):
+    """
+    Finder
+    
+    Responsible for locating source files
+    and loading them with the appropriate loader
+    """
+    
     _loaders = []
     _suffixes = []
     
@@ -18,6 +25,12 @@ class Finder(importlib.machinery.PathFinder):
     
     @classmethod
     def register(cls, loader, suffixes):
+        """
+        Register a loader to handle file names with @suffixes
+        
+        @suffixes:      list of strings
+        """
+        
         cls._loaders.append(loader)
         cls._suffixes.append(suffixes)
 

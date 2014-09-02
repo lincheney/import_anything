@@ -37,7 +37,8 @@ class Compiler:
         """
         Returns a modified AST
         
-        Essentially, all it does is modify the line numbers
+        All it does is modify the line numbers
+        so that tracebacks work nicely
         """
         
         line_numbers = self.line_numbers
