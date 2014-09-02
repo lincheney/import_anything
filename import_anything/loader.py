@@ -75,7 +75,20 @@ class Loader(importlib.machinery.SourceFileLoader):
     def set_data(self, path, data, *args, **kwargs):
         # use the code with modified line numbers
         code_object = self.source_to_code(None, self.path)
-        data = data[:12] + marshal.dumps(code_object)
+        
+        magic = data[:4]
+        mtime = data[4:8]
+        size = data[8:12]
+        code = data[12:]
+        
+        if self._compiler_cls.MAGIC is not None:
+            magic_tail = magic[2:]
+            magic = int.from_bytes(magic[:2], 'little') ^ ~self._compiler_cls.MAGIC
+            magic = ctypes.c_uint16(magic).value.to_bytes(2, 'little') + magic_tail
+        
+        code = marshal.dumps(code_object)
+        
+        data = magic + mtime + size + code
         return super().set_data(path, data, *args, **kwargs)
     
     def path_stats(self, path):
