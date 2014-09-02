@@ -103,3 +103,21 @@ class Loader(importlib.machinery.SourceFileLoader):
         magic = ctypes.c_uint16(magic).value.to_bytes(2, 'little')
         
         return magic + tail
+    
+    def apply_compiler_magic_tag(self, path):
+        """
+        Insert the compiler magic tag into @path
+        
+        '/abc/def/xyz.cpython.pyc' -> '/abc/def/xyz.cpython.{magic-tag}.pyc'
+        
+        If compiler has no MAGIC_TAG, returns @path unmodified
+        """
+        
+        if self._compiler_cls.MAGIC_TAG is None:
+            return path
+        
+        head, sep, tail = path.rpartition('.')
+        if not sep:
+            head = tail
+        
+        return ''.join((head, '.', self._compiler_cls.MAGIC_TAG, sep, tail))

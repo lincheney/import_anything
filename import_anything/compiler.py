@@ -9,6 +9,7 @@ class Compiler:
     """
     
     MAGIC = None
+    MAGIC_TAG = None
     
     def __init__(self, path):
         """

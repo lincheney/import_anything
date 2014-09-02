@@ -8,6 +8,7 @@ class TestLoader(unittest.TestCase):
         if compiler is None:
             compiler = mock.Mock()
             compiler.MAGIC = None
+            compiler.MAGIC_TAG = None
         
         return Loader('filename', 'path', compiler = compiler)
     
@@ -182,3 +183,32 @@ class TestLoader(unittest.TestCase):
         
         result = loader.apply_compiler_magic(data)
         self.assertEqual(result, magic_data)
+    
+    def test_apply_compiler_magic_tag_no_magic_tag(self):
+        """
+        .apply_compiler_magic_tag should do nothing with no magic tag
+        """
+        
+        path = '/abc/def/xyz.cpython.pyc'
+        
+        loader = self.default_loader()
+        loader._compiler_cls.MAGIC_TAG = None
+        
+        result = loader.apply_compiler_magic_tag(path)
+        self.assertEqual(result, path)
+    
+    def test_apply_compiler_magic_tag_with_magic_tag(self):
+        """
+        .apply_compiler_magic_tag should insert the magic tag
+        into the path
+        """
+        
+        magic_tag = 'custom-magic'
+        path = '/abc/def/xyz.cpython.pyc'
+        expected_path = '/abc/def/xyz.cpython.{}.pyc'.format(magic_tag)
+        
+        loader = self.default_loader()
+        loader._compiler_cls.MAGIC_TAG = magic_tag
+        
+        result = loader.apply_compiler_magic_tag(path)
+        self.assertEqual(result, expected_path)
