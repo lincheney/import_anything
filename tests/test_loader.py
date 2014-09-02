@@ -79,6 +79,20 @@ class TestLoader(unittest.TestCase):
             loader = Loader('', 'path')
             result = loader.set_data('bytecode path', data)
             
-            super_set_data.assert_called_once_with('bytecode path', data[:12] + marshal.dumps('code'))
+            super_set_data.assert_called_once_with('bytecode path', data[:12] + marshal.dumps(code))
             # returns the super call
             self.assertIs(result, sentinel.super_result)
+    
+    @mock.patch('importlib.machinery.SourceFileLoader.path_stats')
+    def test_path_stats(self, super_path_stats):
+        """
+        .path_stats should store the returned size
+        """
+        
+        super_path_stats.return_value = dict(size = sentinel.size)
+        
+        loader = Loader('', 'path')
+        result = loader.path_stats('some path')
+        
+        super_path_stats.assert_called_once_with('some path')
+        self.assertEqual(loader._size, sentinel.size)
