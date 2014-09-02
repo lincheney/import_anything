@@ -6,6 +6,7 @@ class Compiler:
     Source-to-python compiler
     
     Subclasses should reimplement the .translate method
+    and possibly set the MAGIC and MAGIC_TAG values
     """
     
     MAGIC = None

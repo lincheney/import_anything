@@ -114,9 +114,9 @@ class TestLoaderGetData(unittest.TestCase):
         """
         
         magic_tag = 'magic-tag'
-        magic_path = '/abc/def.{}.py'.format(magic_tag)
-        
         self.loader._compiler_cls.MAGIC_TAG = magic_tag
+        magic_path = self.loader.apply_compiler_magic_tag(self.path)
+        
         result = self.loader.get_data(self.path)
         self.super_get_data.assert_called_once_with(magic_path)
 
@@ -170,9 +170,9 @@ class TestLoadSetData(unittest.TestCase):
         """
         
         magic_tag = 'magic-tag'
-        magic_path = '/abc/def.{}.py'.format(magic_tag)
-        
         self.loader._compiler_cls.MAGIC_TAG = magic_tag
+        magic_path = self.loader.apply_compiler_magic_tag(self.path)
+        
         result = self.loader.set_data(self.path, self.data)
         self.super_set_data.assert_called_once_with(magic_path, mock.ANY)
 
@@ -200,7 +200,7 @@ class TestLoaderApplyCompilerMagic(unittest.TestCase):
         
         compiler_magic = 10
         
-        magic_data = int.from_bytes(self.data[:2], 'little') ^ ~compiler_magic
+        magic_data = int.from_bytes(self.data[:2], 'little') ^ compiler_magic
         magic_data = ctypes.c_uint16(magic_data).value.to_bytes(2, 'little')
         magic_data = magic_data + self.data[2:]
         

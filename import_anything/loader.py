@@ -38,6 +38,7 @@ class Loader(importlib.machinery.SourceFileLoader):
     def get_data(self, path):
         if path != self.path:
             # return bytecode but set the size to the original file size
+            path = self.apply_compiler_magic_tag(path)
             data = super().get_data(path)
             
             magic = data[:4]
@@ -81,6 +82,7 @@ class Loader(importlib.machinery.SourceFileLoader):
         code = marshal.dumps(code_object)
         
         data = magic + mtime + size + code
+        path = self.apply_compiler_magic_tag(path)
         return super().set_data(path, data, *args, **kwargs)
     
     def path_stats(self, path):
@@ -99,7 +101,7 @@ class Loader(importlib.machinery.SourceFileLoader):
             return magic
         
         tail = magic[2:]
-        magic = int.from_bytes(magic[:2], 'little') ^ ~self._compiler_cls.MAGIC
+        magic = int.from_bytes(magic[:2], 'little') ^ self._compiler_cls.MAGIC
         magic = ctypes.c_uint16(magic).value.to_bytes(2, 'little')
         
         return magic + tail
