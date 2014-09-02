@@ -5,7 +5,7 @@ from import_anything import Compiler
 class TestCompiler(unittest.TestCase):
     def test_indent(self):
         """
-        #indent should indent a string
+        .indent should indent a string
         """
         
         string = 'abcdef'
@@ -14,7 +14,7 @@ class TestCompiler(unittest.TestCase):
     
     def test_strip_indents(self):
         """
-        #strip_indents should strip leading whitespace
+        .strip_indents should strip leading whitespace
         and return the length of the whitespace and the
         remaining string
         """
