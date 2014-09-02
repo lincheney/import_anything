@@ -40,10 +40,12 @@ class Compiler:
         Essentially, all it does is modify the line numbers
         """
         
+        line_numbers = self.line_numbers
+        
         tree = ast.parse(self.data)
         for node in ast.walk(tree):
             try:
-                node.lineno = self.line_numbers[node.lineno]
+                node.lineno = line_numbers[node.lineno]
             except AttributeError:
                 pass
         return tree

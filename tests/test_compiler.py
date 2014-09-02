@@ -57,3 +57,24 @@ class TestCompiler(unittest.TestCase):
         
         self.assertEqual(compiler.data, '\n'.join(lines))
         self.assertEqual(compiler.line_numbers, [0] + lineno + [3])
+    
+    @mock.patch.object(Compiler, '__init__', return_value = None)
+    def test_make_ast_tree(self, __init__):
+        """
+        .make_ast_tree should return an AST tree with modified line numbers
+        """
+        import ast
+        
+        # test that the one line of code is assigned line #4
+        src = ['print(123)']
+        lineno = [0, 4]
+        
+        compiler = Compiler()
+        compiler.data = '\n'.join(src)
+        compiler.line_numbers = lineno
+        
+        result = compiler.make_ast_tree()
+        
+        for node in ast.walk(result):
+            if hasattr(node, 'lineno'):
+                self.assertEqual(node.lineno, lineno[1])
