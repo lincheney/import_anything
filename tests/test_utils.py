@@ -6,7 +6,7 @@ from import_anything import utils as Utils
 class TestUtils(unittest.TestCase):
     def test_indent(self):
         """
-        .indent should indent a string and use args/kwargs
+        indent() should indent a string and use args/kwargs
         as arguments to string.format
         """
         
@@ -16,7 +16,7 @@ class TestUtils(unittest.TestCase):
     
     def test_indent_no_format(self):
         """
-        .indent should not attempt to format the string
+        indent() should not attempt to format the string
         if there are no other args
         """
         
@@ -25,7 +25,7 @@ class TestUtils(unittest.TestCase):
     
     def test_strip_indents(self):
         """
-        .strip_indents should strip leading whitespace
+        strip_indents() should strip leading whitespace
         and return the length of the whitespace and the
         remaining string
         """
@@ -37,7 +37,7 @@ class TestUtils(unittest.TestCase):
     
     def test_complete_blocks_empty_block(self):
         """
-        .complete_blocks should append 'pass' to empty blocks
+        complete_blocks() should append 'pass' to empty blocks
         """
         
         @Utils.complete_blocks(indent_by = 2, body = 'pass')
@@ -49,7 +49,7 @@ class TestUtils(unittest.TestCase):
     
     def test_complete_blocks_filled_block(self):
         """
-        .complete_blocks should leave 'filled' blocks alone
+        complete_blocks() should leave 'filled' blocks alone
         """
         
         @Utils.complete_blocks(indent_by = 2, body = 'pass')

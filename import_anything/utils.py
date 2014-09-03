@@ -19,29 +19,27 @@ def strip_indents(string):
     return match.end(1), match.group(2)
 
 
-"""
-complete_blocks:
-
-Decorator to wrap Compiler.translate. Use like this:
-
-class Compiler:
-    @complete_blocks(indent_by = 2)
-    def translate(self, file, block):
-        yield 1, 'normal_line'
-        yield 2, block('def start_a_block():')
-        yield 3, 'unexpected_dedent'
-        ...
-
-complete_blocks will notice you had an empty block after
-line #2 and insert a pass statement there, so you end up with:
-
-normal_line
-def start_a_block():
-  pass
-unexpected_dedent
-
-"""
 def complete_blocks(indent_by = 4, body = 'pass'):
+    """
+    Decorator to wrap Compiler.translate. Use like this:
+
+    class Compiler:
+        @complete_blocks(indent_by = 2)
+        def translate(self, file, block):
+            yield 1, 'normal_line'
+            yield 2, block('def start_a_block():')
+            yield 3, 'unexpected_dedent'
+            ...
+
+    complete_blocks will notice you had an empty block after
+    line #2 and insert a pass statement there, so you end up with:
+
+    normal_line
+    def start_a_block():
+    pass
+    unexpected_dedent
+
+    """
     return functools.partial(Block.decorator, indent_by = indent_by, body = body)
 
 class Block(str):
