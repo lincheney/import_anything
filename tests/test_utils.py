@@ -6,12 +6,22 @@ from import_anything import utils as Utils
 class TestUtils(unittest.TestCase):
     def test_indent(self):
         """
-        .indent should indent a string
+        .indent should indent a string and use args/kwargs
+        as arguments to string.format
         """
         
-        string = 'abcdef'
-        result = Utils.indent(10, string)
-        self.assertEqual(result, ' ' * 10 + string)
+        string = 'abc{}def'
+        result = Utils.indent(10, string, 100)
+        self.assertEqual(result, ' ' * 10 + string.format(100))
+    
+    def test_indent_no_format(self):
+        """
+        .indent should not attempt to format the string
+        if there are no other args
+        """
+        
+        result = Utils.indent(10, '{}')
+        self.assertEqual(result, ' ' * 10 + '{}')
     
     def test_strip_indents(self):
         """
