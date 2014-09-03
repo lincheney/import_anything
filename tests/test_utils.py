@@ -35,24 +35,27 @@ class TestUtils(unittest.TestCase):
         result = Utils.strip_indents(indent + rest)
         self.assertEqual(result, (len(indent), rest))
     
-    def test_complete_blocks(self):
+    def test_complete_blocks_empty_block(self):
         """
-        .complete_blocks should append 'pass' to all empty
-        code blocks (i.e. if,while,for,def,class,with etc.)
+        .complete_blocks should append 'pass' to empty blocks
         """
         
-        indent = 2
-        body = 'abc'
-        @Utils.complete_blocks(indent_by = indent, body = body)
+        @Utils.complete_blocks(indent_by = 2, body = 'pass')
         def source(block):
-            yield 1, 'line #1'
-            yield 2, block('block:')
-            yield 3, '  block body'
-            yield 4, block('empty block:')
+            yield 1, block('empty block:')
         
         result = list(source())
-        self.assertEqual(len(result), 5)
+        self.assertEqual(result, [(1, 'empty block:'), (1, '  pass')])
+    
+    def test_complete_blocks_filled_block(self):
+        """
+        .complete_blocks should leave 'filled' blocks alone
+        """
         
-        lineno, strings = zip(*result)
-        self.assertEqual(lineno, (1, 2, 3, 4, 4))
-        self.assertEqual(strings, ('line #1', 'block:', '  block body', 'empty block:', ' ' * indent + 'abc'))
+        @Utils.complete_blocks(indent_by = 2, body = 'pass')
+        def source(block):
+            yield 1, block('block:')
+            yield 2, '  block body'
+        
+        result = list(source())
+        self.assertEqual(result, [(1, 'block:'), (2, '  block body')])
