@@ -1,6 +1,7 @@
 import ast
 import re
 import linecache
+import tokenize
 
 class Compiler:
     """
@@ -37,7 +38,7 @@ class Compiler:
         Open the file at @path
         """
         
-        return open(path, 'r')
+        return tokenize.open(path)
     
     def make_ast_tree(self):
         """
