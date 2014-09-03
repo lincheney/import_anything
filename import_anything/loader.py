@@ -68,7 +68,8 @@ class Loader(importlib.machinery.SourceFileLoader):
             return data
         
         # return the translated source
-        return self.compiler.data
+        #return self.compiler.data
+        return ''
     
     def source_to_code(self, data, path, *args, original_code=None, **kwargs):
         if self._code_object is None:

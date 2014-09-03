@@ -2,8 +2,24 @@ import unittest
 import unittest.mock as mock
 from unittest.mock import sentinel
 from import_anything import Compiler
+import contextlib
 
 class TestCompiler(unittest.TestCase):
+    @staticmethod
+    @contextlib.contextmanager
+    def make_compiler(path = 'path', **kwargs):
+        cm = mock.patch.object(Compiler, '__init__', return_value = None)
+        cm.start()
+        
+        compiler = Compiler()
+        compiler.path = path
+        
+        for k, v in kwargs.items():
+            setattr(compiler, k, v)
+        
+        yield compiler
+        cm.stop()
+    
     def test_indent(self):
         """
         .indent should indent a string
@@ -58,8 +74,7 @@ class TestCompiler(unittest.TestCase):
         self.assertEqual(compiler.data, '\n'.join(lines))
         self.assertEqual(compiler.line_numbers, [0] + lineno + [3])
     
-    @mock.patch.object(Compiler, '__init__', return_value = None)
-    def test_make_ast_tree(self, __init__):
+    def test_make_ast_tree(self):
         """
         .make_ast_tree should return an AST tree with modified line numbers
         """
@@ -69,12 +84,31 @@ class TestCompiler(unittest.TestCase):
         src = ['print(123)']
         lineno = [0, 4]
         
-        compiler = Compiler()
-        compiler.data = '\n'.join(src)
-        compiler.line_numbers = lineno
+        with self.make_compiler(data = '\n'.join(src), line_numbers = lineno) as compiler:
+            result = compiler.make_ast_tree()
+            
+            for node in ast.walk(result):
+                if hasattr(node, 'lineno'):
+                    self.assertEqual(node.lineno, lineno[1])
+    
+    @mock.patch('linecache.getline')
+    def test_make_ast_tree_error(self, getline):
+        """
+        .make_ast_tree should modify error tracebacks to point
+        to the correct line if it encounters a syntax error
+        """
         
-        result = compiler.make_ast_tree()
+        src = ['some invalid python']
+        lineno = [0, 4]
+        getline.return_value = sentinel.error_line
         
-        for node in ast.walk(result):
-            if hasattr(node, 'lineno'):
-                self.assertEqual(node.lineno, lineno[1])
+        with self.make_compiler(data = '\n'.join(src), line_numbers = lineno) as compiler:
+            with self.assertRaises(SyntaxError) as cm:
+                compiler.make_ast_tree()
+            
+            path, row, col, line = cm.exception.args[1]
+            self.assertEqual(path, compiler.path)
+            self.assertEqual(row, 4)
+            self.assertEqual(line, sentinel.error_line)
+            
+            getline.assert_called_once_with(compiler.path, lineno[-1])

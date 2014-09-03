@@ -76,11 +76,10 @@ class TestLoaderGetData(unittest.TestCase):
     
     def test_compiled(self):
         """
-        .get_data should return the translated code when re-compiling
+        .get_data should not attempt to compile if we don't ask for bytecode
         """
         
-        result = self.loader.get_data(self.loader.path)
-        self.assertIs(result, self.loader.compiler.data)
+        self.assertEqual(self.loader.get_data(self.loader.path), '')
     
     def test_without_magic(self):
         """

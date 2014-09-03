@@ -1,5 +1,6 @@
 import ast
 import re
+import linecache
 
 class Compiler:
     """
@@ -19,6 +20,7 @@ class Compiler:
         @path:      the path to the file to translate
         """
         
+        self.path = path
         file = self.open(path)
         
         lines = []
@@ -47,7 +49,16 @@ class Compiler:
         
         line_numbers = self.line_numbers
         
-        tree = ast.parse(self.data)
+        try:
+            tree = ast.parse(self.data, filename = self.path)
+        except SyntaxError as e:
+            descr, args = e.args
+            args = list(args)
+            args[1] = line_numbers[e.lineno]
+            args[3] = linecache.getline(e.filename, args[1])
+            e.__init__(descr, args)
+            raise
+        
         for node in ast.walk(tree):
             try:
                 node.lineno = line_numbers[node.lineno]
