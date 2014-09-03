@@ -24,7 +24,7 @@ class Compiler(import_anything.Compiler):
         # insert some code here to translate @file into python
         ...
 
-loader = import_anything.Loader.from_compiler(Compiler)
+loader = import_anything.Loader.factory(compiler = Compiler)
 import_anything.Finder.register(loader, ['.custom-py', '.another-py'])
 
 import your_custom_module

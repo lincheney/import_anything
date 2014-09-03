@@ -11,24 +11,10 @@ def default_loader():
     return Loader('filename', 'path', compiler = compiler)
 
 class TestLoader(unittest.TestCase):
-    def test_from_compiler(self):
-        """
-        .from_compiler should subclass and set COMPILER
-        """
-        
-        compiler_cls = mock.Mock(return_value = sentinel.compiler)
-        factory = Loader.from_compiler(compiler_cls)
-        
-        assert callable(factory)
-        
-        loader = factory('', 'path')
-        self.assertIsInstance(loader, Loader)
-        self.assertIs(loader.compiler, sentinel.compiler)
-    
     @mock.patch('builtins.compile')
     def test_source_to_code_compiled(self, compile):
         """
-        .source_to_code should compile a code object
+        .source_to_code() should compile a code object
         when re-compiling
         """
         
@@ -43,7 +29,7 @@ class TestLoader(unittest.TestCase):
     @mock.patch('importlib.machinery.SourceFileLoader.path_stats')
     def test_path_stats(self, super_path_stats):
         """
-        .path_stats should store the returned size
+        .path_stats() should store the returned size
         """
         
         super_path_stats.return_value = dict(size = sentinel.size)
@@ -56,7 +42,7 @@ class TestLoader(unittest.TestCase):
 
 class TestLoaderGetData(unittest.TestCase):
     """
-    Tests for Loader.get_data
+    Tests for Loader.get_data()
     """
     
     data = b'0' * 100
@@ -76,14 +62,14 @@ class TestLoaderGetData(unittest.TestCase):
     
     def test_compiled(self):
         """
-        .get_data should not attempt to compile if we don't ask for bytecode
+        .get_data() should not attempt to compile if we don't ask for bytecode
         """
         
         self.assertEqual(self.loader.get_data(self.loader.path), '')
     
     def test_without_magic(self):
         """
-        .get_data should only modify the size without magic
+        .get_data() should only modify the size without magic
         """
         
         result = self.loader.get_data(self.path)
@@ -96,7 +82,7 @@ class TestLoaderGetData(unittest.TestCase):
         
     def test_with_magic(self):
         """
-        .get_data should apply the compiler magic
+        .get_data() should apply the compiler magic
         """
         
         self.loader._compiler_cls.MAGIC = 10
@@ -108,7 +94,7 @@ class TestLoaderGetData(unittest.TestCase):
     
     def test_with_magic_tag(self):
         """
-        .get_data should apply the magic tag to the
+        .get_data() should apply the magic tag to the
         path that data gets loaded from
         """
         
@@ -118,9 +104,22 @@ class TestLoaderGetData(unittest.TestCase):
         
         result = self.loader.get_data(self.path)
         self.super_get_data.assert_called_once_with(magic_path)
+    
+    def test_recompile(self):
+        """
+        .get_data() should refuse to load data if recompiling
+        """
+        
+        self.loader._recompile = True
+        with self.assertRaises(Exception):
+            self.loader.get_data(self.path)
 
 
 class TestLoadSetData(unittest.TestCase):
+    """
+    Tests for Loader.set_data()
+    """
+    
     data = b'0' * 100
     code = 'code'
     path = '/abc/def.py'
@@ -141,7 +140,7 @@ class TestLoadSetData(unittest.TestCase):
     
     def test_no_magic(self):
         """
-        .set_data should replace data with recompiled code
+        .set_data() should replace data with recompiled code
         """
         import marshal
         
@@ -151,7 +150,7 @@ class TestLoadSetData(unittest.TestCase):
     
     def test_with_magic(self):
         """
-        .set_data should apply the compiler magic
+        .set_data() should apply the compiler magic
         """
         
         compiler_magic = 100
@@ -164,8 +163,7 @@ class TestLoadSetData(unittest.TestCase):
     
     def test_with_magic_tag(self):
         """
-        .set_data should apply the magic tag to the
-        path that data gets saved to
+        .set_data() should apply the magic tag to the path that data gets saved to
         """
         
         magic_tag = 'magic-tag'
@@ -177,6 +175,10 @@ class TestLoadSetData(unittest.TestCase):
 
 
 class TestLoaderApplyCompilerMagic(unittest.TestCase):
+    """
+    Tests for Loader.apply_compiler_magic()
+    """
+    
     data = b'0' * 100
     
     def setUp(self):
@@ -185,7 +187,7 @@ class TestLoaderApplyCompilerMagic(unittest.TestCase):
     
     def test_no_magic(self):
         """
-        .apply_compiler_magic should do nothing with no magic
+        .apply_compiler_magic() should do nothing with no magic
         """
         
         result = self.loader.apply_compiler_magic(self.data)
@@ -193,7 +195,7 @@ class TestLoaderApplyCompilerMagic(unittest.TestCase):
     
     def test_with_magic(self):
         """
-        .apply_compiler_magic should xor magic to data
+        .apply_compiler_magic() should xor magic to data
         """
         import ctypes
         
@@ -211,7 +213,7 @@ class TestLoaderApplyCompilerMagic(unittest.TestCase):
 
 class TestLoaderApplyCompilerMagicTag(unittest.TestCase):
     """
-    Tests for Loader.apply_compiler_magic
+    Tests for Loader.apply_compiler_magic()
     """
     
     path = '/abc/def/xyz.cpython.pyc'
@@ -222,7 +224,7 @@ class TestLoaderApplyCompilerMagicTag(unittest.TestCase):
     
     def test_no_magic_tag(self):
         """
-        .apply_compiler_magic_tag should do nothing with no magic tag
+        .apply_compiler_magic_tag() should do nothing with no magic tag
         """
         
         result = self.loader.apply_compiler_magic_tag(self.path)
@@ -230,8 +232,7 @@ class TestLoaderApplyCompilerMagicTag(unittest.TestCase):
     
     def test_with_magic_tag(self):
         """
-        .apply_compiler_magic_tag should insert the magic tag
-        into the path
+        .apply_compiler_magic_tag() should insert the magic tag into the path
         """
         
         magic_tag = 'custom-magic'

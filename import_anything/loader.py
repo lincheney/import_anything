@@ -9,12 +9,15 @@ class Loader(importlib.machinery.SourceFileLoader):
     
     Loads/stores cached bytecode etc.
     
-    Loader.from_compiler() returns a factory that
-    makes Loader with a preset compiler
+    In general, just use a Loader.factory()
+    to set default values to Loader.__init__
+    
+    If _recompile is true, the loader will recompile the source
+    every time and ignore cached bytecode
     
     When compiler.MAGIC is set:
-        the magic number in the saved bytecode is XORed
-        with the compiler.MAGIC
+        the magic number in the saved bytecode is XORed with the compiler.MAGIC
+        
         This basically allows you to bump compiler version
         numbers and the importer will automatically
         recompile all the bytecode.
@@ -22,8 +25,10 @@ class Loader(importlib.machinery.SourceFileLoader):
     When compiler.MAGIC_TAG is set:
         instead of reading/writing bytecode at
         /path/to/bytecode.cpython-33.pyc
+        
         it reads/writes at
         /path/to/bytecode.cpython-33.{magic-tag}.pyc
+        
         This allows you to separate custom compiled bytecode
         from normal python bytecode.
     """
@@ -31,18 +36,16 @@ class Loader(importlib.machinery.SourceFileLoader):
     _size = None
     _compiler = None
     _code_object = None
+    _recompile = False
     
-    def __init__(self, *args, compiler, **kwargs):
+    def __init__(self, *args, compiler, recompile = False, **kwargs):
         super().__init__(*args, **kwargs)
         self._compiler_cls = compiler
+        self._recompile = recompile
     
     @classmethod
-    def from_compiler(cls, compiler):
-        """
-        Return a Loader factory for @compiler
-        """
-        
-        return functools.partial(cls, compiler = compiler)
+    def factory(cls, **kwargs):
+        return functools.partial(cls, **kwargs)
     
     @property
     def compiler(self):
@@ -52,6 +55,10 @@ class Loader(importlib.machinery.SourceFileLoader):
     
     def get_data(self, path):
         if path != self.path:
+            if self._recompile:
+                # importlib._bootstrap allows OSErrors through
+                raise OSError()
+            
             # return bytecode but set the size to the original file size
             path = self.apply_compiler_magic_tag(path)
             data = super().get_data(path)
