@@ -4,6 +4,8 @@ Utilities for parsing
 
 import functools
 import re
+import tokenize
+from io import StringIO
 
 def indent(indent, string, *args, **kwargs):
     if args or kwargs:
@@ -66,3 +68,76 @@ class Block(str):
                 yield lineno, indent(block_indent + indent_by, body)
         
         return wrapped_fn
+
+
+def full_tokenize(lines):
+    """
+    Same as tokenize.generate_tokens() but non-trailing whitespace is preserved so that
+    ''.join(t.string for t in full_tokenize(line)) == ''.join(lines).rstrip()
+    
+    Trailing whitespace WILL be removed
+    """
+    
+    tokens = tokenize.generate_tokens(lines)
+    prev_pos = (-1, -1)
+    for token in tokens:
+        if prev_pos[0] != token.start[0]:
+            # new line: extend to start of line
+            string = token.line[ : token.start[1]] + token.string
+            token = token._replace(string = string, start = (token.start[0], 0))
+        
+        elif prev_pos[1] != token.start[1]:
+            # old line: extend to start of previous token
+            string = token.line[prev_pos[1] : token.start[1]] + token.string
+            token = token._replace(string = string, start = prev_pos)
+        
+        yield token
+        prev_pos = token.end
+
+
+__delim_map = {'{': '}', '[': ']', '(': ')'}
+def extract_structure(string):
+    """
+    Extract the the structure (string/tuple/list/dict etc.) at the start of @string
+    Returns (structure, rest of string)
+    
+    e.g.
+    extract_structure('[1, 2, 3] + [4]') == ('[1, 2, 3]', ' + [4]')
+    
+    Raises an error if it doesn't start with a structure or some other
+    tokenization error (e.g. no matching brackets, bad indentation)
+    """
+    
+    stack = []
+    tokens = full_tokenize(StringIO(string).readline)
+    
+    try:
+        token = next(tokens)
+    except StopIteration:
+        pass
+    else:
+        if token.type == tokenize.STRING:
+            rest = string[token.start[1] + len(token.string):]
+            return token.string, rest
+        stripped = token.string.strip()
+        if stripped in __delim_map:
+            stack.append(__delim_map[stripped])
+    
+    if not stack:
+        raise ValueError('String did not start with structure: {}'.format(string))
+    
+    struct = [token.string]
+    
+    for token in tokens:
+        struct.append(token.string)
+        stripped = token.string.strip()
+        
+        if stripped in __delim_map:
+            stack.append(__delim_map[stripped])
+        elif stripped == stack[-1]:
+            stack.pop()
+            if not stack:
+                struct = ''.join(struct)
+                return struct, string[len(struct):]
+    
+    raise ValueError('String did not start with structure: {}'.format(string))

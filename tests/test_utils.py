@@ -59,3 +59,63 @@ class TestUtils(unittest.TestCase):
         
         result = list(source())
         self.assertEqual(result, [(1, 'block:'), (2, '  block body')])
+    
+    def test_full_tokenize(self):
+        """
+        full_tokenize() should tokenize the string but keep all whitespace
+        except trailing whitespace
+        """
+        import io
+        
+        string = ''' 'string' + [nest, [lists, (tuple,)]] * function_call() + \n line_continuation '''
+        result = Utils.full_tokenize(io.StringIO(string).readline)
+        result = ''.join(i.string for i in result)
+        self.assertEqual(result, string.rstrip())
+    
+    def test_extract_structure(self):
+        """
+        extract_structure() returns the string/list/dict/tuple etc. at
+        the start of the string and also the rest
+        """
+        
+        tests = [
+            ('{} + 1', '{}'),
+            ('[] + 1', '[]'),
+            ('() + 1', '()'),
+            ('(x)', '(x)'),
+            ('"string" - 4', '"string"'),
+            ("'str' * 3", "'str'"),
+            ('{nested: ["structures", ()]} + other_stuff', '{nested: ["structures", ()]}'),
+            ('r"raw string" + None', 'r"raw string"'),
+            ('"""multiline\ntriple\nquotes""" + 0', '"""multiline\ntriple\nquotes"""'),
+            ("'''backslashes \\'''' ", "'''backslashes \\''''"),
+            ('b"bytes" #comment', 'b"bytes"'),
+            ('u"unicode" "another string"', 'u"unicode"'),
+            ]
+        
+        for string, struct in tests:
+            result = Utils.extract_structure(string)
+            self.assertEqual(result[0], struct)
+            self.assertEqual(''.join(result), string)
+    
+    def test_extract_structure_no_structure(self):
+        """
+        extract_structure() should raise an exception if
+        the sting does not start with a structure
+        """
+        import tokenize
+        
+        tests = [
+            'variable_name',
+            'function_call()',
+            '1 + 2',
+            'if Statement:',
+            '@decorator',
+            '*[spliced, list]',
+            '"unclosed quotes',
+            '(unclosed bracket',
+            ]
+        
+        for string in tests:
+            with self.assertRaises((ValueError, tokenize.TokenError)):
+                Utils.extract_structure(string)
