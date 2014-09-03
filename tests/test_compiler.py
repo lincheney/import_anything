@@ -55,7 +55,7 @@ class TestCompiler(unittest.TestCase):
     
     def test_make_ast_tree(self):
         """
-        .make_ast_tree should return an AST tree with modified line numbers
+        .make_ast_tree() should return an AST tree with modified line numbers
         """
         import ast
         
@@ -73,7 +73,7 @@ class TestCompiler(unittest.TestCase):
     @mock.patch('linecache.getline')
     def test_make_ast_tree_error(self, getline):
         """
-        .make_ast_tree should modify error tracebacks to point
+        .make_ast_tree() should modify error tracebacks to point
         to the correct line if it encounters a syntax error
         """
         
@@ -91,3 +91,25 @@ class TestCompiler(unittest.TestCase):
             self.assertEqual(line, sentinel.error_line)
             
             getline.assert_called_once_with(compiler.path, lineno[-1])
+    
+    def test_get_source(self):
+        """
+        .get_source() should return the source
+        """
+        
+        src = ['line #1', 'line #2', 'line #3']
+        lineno = [0, 2, 4, 5]
+        with self.make_compiler(data = '\n'.join(src), line_numbers = lineno) as compiler:
+            # without line numbers
+            result = compiler.get_source(line_numbers = False)
+            self.assertEqual(result, '\n'.join(src))
+            
+            # with line numbers
+            result = compiler.get_source(line_numbers = True)
+            for ln, (res, expected) in enumerate(zip(result.split('\n'), src), 1):
+                self.assertRegex(res, '{} {}'.format(ln, expected))
+            
+            # with original line numbers
+            result = compiler.get_source(original_numbers = True)
+            for ln, res, expected in zip(lineno[1:], result.split('\n'), src):
+                self.assertRegex(res, '{} {}'.format(ln, expected))

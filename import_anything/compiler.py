@@ -67,13 +67,30 @@ class Compiler:
                 pass
         return tree
     
-    def dump_source(self):
+    def get_source(self, line_numbers = True, original_numbers = False):
         """
-        Print the translated source with line numbers
+        Returns the translated source
+        
+        If @original_numbers, then line numbers pointing to the original
+        source file are used
         """
         
-        for lineno, line in enumerate(self.data.split('\n'), 1):
-            print('{:2} {}'.format(lineno, line) )
+        source = []
+        data = self.data.split('\n')
+        
+        if original_numbers:
+            data = zip(self.line_numbers[1:], data)
+            template = '{lineno:2} {line}'
+        elif line_numbers:
+            data = enumerate(data, 1)
+            template = '{lineno:2} {line}'
+        else:
+            data = enumerate(data, 1)
+            template = '{line}'
+        
+        for lineno, line in data:
+            source.append(template.format(lineno = lineno, line = line) )
+        return '\n'.join(source)
     
     def translate(self, file):
         """
