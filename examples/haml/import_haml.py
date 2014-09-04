@@ -10,8 +10,8 @@ class HamlCompiler(import_anything.Compiler):
     @utils.complete_blocks()
     def translate(self, file, block):
         lineno = 0
-        yield lineno, 'import haml_renderer'
-        yield lineno, block('def render():')
+        yield lineno, block('def _render():')
+        yield lineno, utils.indent(2, 'import haml_renderer')
         yield lineno, utils.indent(2, 'stack = haml_renderer.Stack()')
         
         for lineno, line in enumerate(file, 1):
@@ -23,6 +23,7 @@ class HamlCompiler(import_anything.Compiler):
                     yield lineno, utils.indent(indent, l)
         
         yield lineno, utils.indent(2, 'return stack.render()')
+        yield lineno, 'render = lambda **kwa: eval(_render.__code__, kwa)'
     
     def handle_tag(self, string, block):
         tag, string = re.match(r'([\w.#]*)(.*)', string).groups()
@@ -37,11 +38,19 @@ class HamlCompiler(import_anything.Compiler):
             elif prefix == '#':
                 ids.append(name)
         
-        string = repr(string)
+        if string.startswith('='):
+            string = string[1:]
+        else:
+            string = repr(string)
         yield block('with stack.add_tag({!r}, {}, {!r}, {!r}):'.format(tag, string, tuple(classes), tuple(ids)))
 
 loader = import_anything.Loader.factory(compiler = HamlCompiler, recompile = True)
 import_anything.Finder.register(loader, ['.haml'])
 
 import main_haml
-print(main_haml.render())
+haml = main_haml.render(
+    post_title = 'Title',
+    post_subtitle = 'subtitle',
+    post_content = 'content',
+)
+print(haml)
