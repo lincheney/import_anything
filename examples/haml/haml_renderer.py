@@ -53,10 +53,11 @@ class Stack:
         
         if len(self.text) == index + 2 and not self.is_tag(index + 1):
             # only one text child
-            self.text[index + 1] = self.indented('{}{}{}'.format(open_tag, self.text[index + 1].lstrip(), close_tag))
+            self.text[index + 1] = '{}{}{}'.format(open_tag, self.text[index + 1].lstrip(), close_tag)
         
         else:
             # some child is a tag
+            # put open tag in placeholder
             self.text[index] = open_tag
             self.text.append(self.indented(close_tag))
     
