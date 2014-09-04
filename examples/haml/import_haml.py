@@ -25,8 +25,12 @@ class HamlCompiler(import_anything.Compiler):
                 for l in self.handle_tag(line.lstrip(), block):
                     yield lineno, utils.indent(indent, l)
             
-            elif line.startswith('='):
-                yield lineno, utils.indent(indent, 'stack.add_text({})', line[1:])
+            else:
+                if line.startswith('='):
+                    line = line[1:]
+                else:
+                    line = repr(line)
+                yield lineno, utils.indent(indent, 'stack.add_text({})', line)
         
         yield lineno, utils.indent(2, 'return stack.render()')
         yield lineno, 'render = lambda **kwa: eval(_render.__code__, kwa)'
