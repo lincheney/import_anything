@@ -14,8 +14,15 @@ class Stack:
         self.text.append(self.indented(text))
     
     @contextlib.contextmanager
-    def add_tag(self, name, text):
-        self.text.append(self.indented('<{}>'.format(name)))
+    def add_tag(self, name, text, classes, ids):
+        attributes = {}
+        if classes:
+            attributes['classes'] = ' '.join(classes)
+        if ids:
+            attributes['ids'] = '_'.join(ids)
+        attributes_string = ''.join(' {}={!r}'.format(k, str(v)) for k, v in attributes.items())
+        
+        self.text.append(self.indented('<{}{}>'.format(name, attributes_string)))
         
         self.indent += 1
         if text != '':
