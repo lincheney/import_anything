@@ -54,7 +54,7 @@ class HamlCompiler(import_anything.Compiler):
                     # grab the dict-style attributes
                     # since it may be multiline, we need to give it the
                     # other lines from the file too
-                    gen = iter(itertools.chain([string], file))
+                    gen = iter(itertools.chain([string + '\n'], file))
                     attributes, string = utils.extract_structure(gen.__next__)
                 
                 # the text
@@ -88,9 +88,9 @@ import_anything.Finder.register(loader, ['.haml'])
 if __name__ == '__main__':
     import main_haml
     haml = main_haml.render(
-        post_title = 'Title',
-        post_subtitle = 'subtitle',
-        post_content = 'content',
         title = 'MyPage',
+        item = dict(type = 'massive', number = 4, urgency = 'urgent'),
+        sortcol = None,
+        sortdir = '/tmp',
     )
     print(haml)

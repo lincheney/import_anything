@@ -1,4 +1,6 @@
 import contextlib
+import itertools
+import collections
 
 class Stack:
     _indent = ' ' * 2
@@ -7,6 +9,30 @@ class Stack:
     def __init__(self):
         self.text = []
         self.indent = 0
+    
+    @classmethod
+    def combine_attribute(cls, key, values, attributes):
+        if values:
+            yield from map(str, values)
+        
+        new_values = attributes.get(key)
+        yield from cls.filter_attribute((new_values,))
+    
+    @classmethod
+    def filter_attribute(cls, values):
+        """
+        attempt to emulate ruby-style haml as best as possible
+        flatten, stringify but don't yield None,False
+        """
+        for v in values:
+            if v is None or v is False:
+                continue
+            elif isinstance(v, str):
+                yield v
+            elif isinstance(v, (list, tuple)):
+                yield from cls.filter_attribute(v)
+            else:
+                yield str(v)
     
     def is_tag(self, index):
         # its a tag if None (if it were text it would have been assigned)
@@ -27,18 +53,12 @@ class Stack:
     def add_tag(self, name, text, classes, ids, attributes):
         attributes = attributes or {}
         
-        if classes:
-            class_ = attributes.get('class')
-            if class_:
-                classes += (class_,)
-            attributes['class'] = ' '.join(classes)
-        
-        if ids:
-            id = attributes.get('id')
-            if id:
-                ids += (id_,)
-            attributes['id'] = '_'.join(ids)
-        
+        cls = ' '.join(self.combine_attribute('class', classes, attributes))
+        if cls:
+            attributes['class'] = cls
+        id = '_'.join(self.combine_attribute('id', ids, attributes))
+        if id:
+            attributes['id'] = id
         attributes_string = ''.join(' {}={!r}'.format(k, str(v)) for k, v in attributes.items())
         
         # place holder for open tag
