@@ -17,8 +17,8 @@ def strip_indents(string):
     Returns ( len(leading whitespace), rest of string )
     """
     
-    match = re.match(r'^(\s*)(.*)$', string)
-    return match.end(1), match.group(2)
+    rest = string.lstrip()
+    return (len(string) - len(rest)), rest
 
 
 def complete_blocks(indent_by = 4, body = 'pass'):
