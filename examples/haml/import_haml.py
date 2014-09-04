@@ -28,6 +28,8 @@ class HamlCompiler(import_anything.Compiler):
             else:
                 if line.startswith('='):
                     line = line[1:]
+                elif line.startswith('\\'):
+                    line = repr(line[1:])
                 else:
                     line = repr(line)
                 yield lineno, utils.indent(indent, 'stack.add_text({})', line)
@@ -48,11 +50,15 @@ class HamlCompiler(import_anything.Compiler):
             elif prefix == '#':
                 ids.append(name)
         
+        attributes = None
+        if string.startswith('{'):
+            attributes, string = utils.extract_structure(string)
+        
         if string.startswith('='):
             string = string[1:]
         else:
             string = repr(string)
-        yield block('with stack.add_tag({!r}, {}, {!r}, {!r}):'.format(tag, string, tuple(classes), tuple(ids)))
+        yield block('with stack.add_tag({!r}, {}, {!r}, {!r}, {}):'.format(tag, string, tuple(classes), tuple(ids), attributes))
 
 loader = import_anything.Loader.factory(compiler = HamlCompiler, recompile = True)
 import_anything.Finder.register(loader, ['.haml'])
@@ -62,5 +68,6 @@ haml = main_haml.render(
     post_title = 'Title',
     post_subtitle = 'subtitle',
     post_content = 'content',
+    title = 'MyPage',
 )
 print(haml)

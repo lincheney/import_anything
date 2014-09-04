@@ -23,12 +23,21 @@ class Stack:
         self.text.append(self.indented(text))
     
     @contextlib.contextmanager
-    def add_tag(self, name, text, classes, ids):
-        attributes = {}
+    def add_tag(self, name, text, classes, ids, attributes):
+        attributes = attributes or {}
+        
         if classes:
+            class_ = attributes.get('class')
+            if class_:
+                classes += (class_,)
             attributes['class'] = ' '.join(classes)
+        
         if ids:
+            id = attributes.get('id')
+            if id:
+                ids += (id_,)
             attributes['id'] = '_'.join(ids)
+        
         attributes_string = ''.join(' {}={!r}'.format(k, str(v)) for k, v in attributes.items())
         
         # place holder for open tag
