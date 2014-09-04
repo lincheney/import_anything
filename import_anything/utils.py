@@ -3,6 +3,7 @@ Utilities for parsing
 """
 
 import functools
+import itertools
 import re
 import tokenize
 from io import StringIO
@@ -99,35 +100,40 @@ def full_tokenize(lines):
 
 
 __delim_map = {'{': '}', '[': ']', '(': ')'}
-def extract_structure(string):
+def extract_structure(lines):
     """
-    Extract the the structure (string/tuple/list/dict etc.) at the start of @string
-    Returns (structure, rest of string)
+    Extract the the structure (string/tuple/list/dict etc.) at the start of @lines
+    @lines should be a callable returning lines
+    Returns (structure, remainder of last extracted line)
     
     e.g.
-    extract_structure('[1, 2, 3] + [4]') == ('[1, 2, 3]', ' + [4]')
+    extract_structure('[1, 2, 3] + [4]\nprint()') == ('[1, 2, 3]', ' + [4]')
+    
+    Note that the last line, print(), wasn't returned since the structure
+    ended on the previous line
     
     Raises an error if it doesn't start with a structure or some other
     tokenization error (e.g. no matching brackets, bad indentation)
     """
     
     stack = []
-    tokens = full_tokenize(StringIO(string).readline)
+    tokens = full_tokenize(lines)
     
     try:
         token = next(tokens)
     except StopIteration:
-        pass
+        raise ValueError('Input was empty')
     else:
         if token.type == tokenize.STRING:
-            rest = string[token.start[1] + len(token.string):]
-            return token.string, rest
+            remainder = ''.join(i.string for i in get_until_eol(tokens))
+            return token.string, remainder
+        
         stripped = token.string.strip()
         if stripped in __delim_map:
             stack.append(__delim_map[stripped])
     
     if not stack:
-        raise ValueError('String did not start with structure: {}'.format(string))
+        raise ValueError('Input did not start with structure: {}'.format(token.string))
     
     struct = [token.string]
     
@@ -141,6 +147,14 @@ def extract_structure(string):
             stack.pop()
             if not stack:
                 struct = ''.join(struct)
-                return struct, string[len(struct):]
+                remainder = ''.join(i.string for i in get_until_eol(tokens))
+                return struct, remainder
     
     raise ValueError('String did not start with structure: {}'.format(string))
+
+def get_until_eol(tokens):
+    """
+    Yields tokens until it hits EOF, newlines etc.
+    """
+    end_types = (tokenize.ENDMARKER, tokenize.NL, tokenize.NEWLINE)
+    return itertools.takewhile(lambda t: t.type not in end_types, tokens)

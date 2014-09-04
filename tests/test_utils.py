@@ -83,8 +83,10 @@ class TestUtils(unittest.TestCase):
     def test_extract_structure(self):
         """
         extract_structure() returns the string/list/dict/tuple etc. at
-        the start of the string and also the rest
+        the start of the string and the rest of the remaining line
+        Any lines starting after aren't returned
         """
+        import io
         
         tests = [
             ('{} + 1', '{}'),
@@ -102,9 +104,16 @@ class TestUtils(unittest.TestCase):
             ]
         
         for string, struct in tests:
-            result = Utils.extract_structure(string)
+            result = Utils.extract_structure(io.StringIO(string).readline)
             self.assertEqual(result[0], struct)
-            self.assertEqual(''.join(result), string)
+            self.assertEqual(''.join(result), string.rstrip())
+        
+        string = '[] + 1\nnext line'
+        struct = '[]'
+        remainder = ' + 1'
+        result = Utils.extract_structure(io.StringIO(string).readline)
+        self.assertEqual(result[0], struct)
+        self.assertEqual(result[1], remainder)
     
     def test_extract_structure_no_structure(self):
         """
@@ -112,6 +121,7 @@ class TestUtils(unittest.TestCase):
         the sting does not start with a structure
         """
         import tokenize
+        import io
         
         tests = [
             'variable_name',
@@ -126,4 +136,4 @@ class TestUtils(unittest.TestCase):
         
         for string in tests:
             with self.assertRaises((ValueError, tokenize.TokenError)):
-                Utils.extract_structure(string)
+                Utils.extract_structure(io.StringIO(string).readline)
