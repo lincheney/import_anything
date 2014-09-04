@@ -2,6 +2,7 @@ import contextlib
 
 class Stack:
     _indent = ' ' * 2
+    VOID_ELEMENTS = {'meta', 'img', 'link', 'br', 'hr', 'input', 'area', 'param', 'col', 'base'}
     
     def __init__(self):
         self.text = []
@@ -53,8 +54,10 @@ class Stack:
         self.indent -= 1
         
         if len(self.text) == index + 1:
-            # tag has no children
-            self.text[index] = self.indented('<{}{} />'.format(name, attributes_string))
+            if name in self.VOID_ELEMENTS:
+                self.text[index] = self.indented('<{}{}>'.format(name, attributes_string))
+            else:
+                self.text[index] = self.indented('<{}{}></{}>'.format(name, attributes_string, name))
             return
         
         open_tag = self.indented('<{}{}>'.format(name, attributes_string))
