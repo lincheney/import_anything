@@ -79,7 +79,7 @@ class TestCompiler(unittest.TestCase):
         
         src = ['some invalid python']
         lineno = [0, 4]
-        getline.return_value = sentinel.error_line
+        getline.return_value = 'line in file'
         
         with self.make_compiler(data = '\n'.join(src), line_numbers = lineno) as compiler:
             with self.assertRaises(SyntaxError) as cm:
@@ -88,7 +88,7 @@ class TestCompiler(unittest.TestCase):
             path, row, col, line = cm.exception.args[1]
             self.assertEqual(path, compiler.path)
             self.assertEqual(row, 4)
-            self.assertEqual(line, sentinel.error_line)
+            self.assertEqual(line, getline.return_value.strip('\n'))
             
             getline.assert_called_once_with(compiler.path, lineno[-1])
     

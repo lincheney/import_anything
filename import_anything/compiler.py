@@ -56,7 +56,8 @@ class Compiler:
             descr, args = e.args
             args = list(args)
             args[1] = line_numbers[e.lineno]
-            args[3] = linecache.getline(e.filename, args[1])
+            args[2] = None
+            args[3] = linecache.getline(e.filename, args[1]).strip('\n')
             e.__init__(descr, args)
             raise
         
