@@ -18,9 +18,15 @@ class HamlCompiler(import_anything.Compiler):
             indent, line = utils.strip_indents(line.rstrip('\n'))
             indent += 2
             
-            if line.startswith('%'):
-                for l in self.handle_tag(line[1:].lstrip(), block):
+            if line and line[0] in ('%', '#', '.'):
+                if line.startswith('%'):
+                    line = line[1:]
+                
+                for l in self.handle_tag(line.lstrip(), block):
                     yield lineno, utils.indent(indent, l)
+            
+            elif line.startswith('='):
+                yield lineno, utils.indent(indent, 'stack.add_text({})', line[1:])
         
         yield lineno, utils.indent(2, 'return stack.render()')
         yield lineno, 'render = lambda **kwa: eval(_render.__code__, kwa)'

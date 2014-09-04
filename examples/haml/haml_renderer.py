@@ -26,9 +26,9 @@ class Stack:
     def add_tag(self, name, text, classes, ids):
         attributes = {}
         if classes:
-            attributes['classes'] = ' '.join(classes)
+            attributes['class'] = ' '.join(classes)
         if ids:
-            attributes['ids'] = '_'.join(ids)
+            attributes['id'] = '_'.join(ids)
         attributes_string = ''.join(' {}={!r}'.format(k, str(v)) for k, v in attributes.items())
         
         # place holder for open tag
