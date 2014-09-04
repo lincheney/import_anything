@@ -23,6 +23,14 @@ class TestUtils(unittest.TestCase):
         result = Utils.indent(10, '{}')
         self.assertEqual(result, ' ' * 10 + '{}')
     
+    def test_indent_block(self):
+        """
+        indent() should preserve Block
+        """
+        
+        result = Utils.indent(4, Utils.Block(''))
+        self.assertIsInstance(result, Utils.Block)
+    
     def test_strip_indents(self):
         """
         strip_indents() should strip leading whitespace

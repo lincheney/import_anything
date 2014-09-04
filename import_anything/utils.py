@@ -10,7 +10,10 @@ from io import StringIO
 def indent(indent, string, *args, **kwargs):
     if args or kwargs:
         string = string.format(*args, **kwargs)
-    return (' ' * indent) + string
+    output = (' ' * indent) + string
+    if isinstance(string, Block):
+        return Block(output)
+    return output
 
 def strip_indents(string):
     """
