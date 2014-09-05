@@ -84,25 +84,32 @@ def full_tokenize(lines):
     
     tokens = tokenize.generate_tokens(lines)
     prev_pos = (-1, -1)
-    for token in tokens:
-        if prev_pos[0] != token.start[0]:
-            # new line: extend to start of line
-            string = token.line[ : token.start[1]] + token.string
-            token = token._replace(string = string, start = (token.start[0], 0))
-        
-        elif prev_pos[1] != token.start[1]:
-            # old line: extend to start of previous token
-            string = token.line[prev_pos[1] : token.start[1]] + token.string
-            token = token._replace(string = string, start = prev_pos)
-        
-        yield token
-        prev_pos = token.end
+    try:
+        for token in tokens:
+            if prev_pos[0] != token.start[0]:
+                # new line: extend to start of line
+                string = token.line[ : token.start[1]] + token.string
+                token = token._replace(string = string, start = (token.start[0], 0))
+            
+            elif prev_pos[1] != token.start[1]:
+                # old line: extend to start of previous token
+                string = token.line[prev_pos[1] : token.start[1]] + token.string
+                token = token._replace(string = string, start = prev_pos)
+            
+            yield token
+            prev_pos = token.end
+    except tokenize.TokenError as e:
+        if e.args[0] == 'EOF in multi-line statement':
+            return
+        raise
 
 
 __delim_map = {'{': '}', '[': ']', '(': ')'}
 def extract_structure(lines):
     """
-    Extract the the structure (string/tuple/list/dict etc.) at the start of @lines
+    Extract the next token in lines
+    If the next token is an opening bracket, it extracts up to the next matching
+    bracket
     @lines should be a callable returning lines
     Returns (structure, remainder of last extracted line)
     
@@ -111,31 +118,11 @@ def extract_structure(lines):
     
     Note that the last line, print(), wasn't returned since the structure
     ended on the previous line
-    
-    Raises an error if it doesn't start with a structure or some other
-    tokenization error (e.g. no matching brackets, bad indentation)
     """
     
     stack = []
+    struct = []
     tokens = full_tokenize(lines)
-    
-    try:
-        token = next(tokens)
-    except StopIteration:
-        raise ValueError('Input was empty')
-    else:
-        if token.type == tokenize.STRING:
-            remainder = ''.join(i.string for i in get_until_eol(tokens))
-            return token.string, remainder
-        
-        stripped = token.string.strip()
-        if stripped in __delim_map:
-            stack.append(__delim_map[stripped])
-    
-    if not stack:
-        raise ValueError('Input did not start with structure: {}'.format(token.string))
-    
-    struct = [token.string]
     
     for token in tokens:
         struct.append(token.string)
@@ -143,14 +130,15 @@ def extract_structure(lines):
         
         if stripped in __delim_map:
             stack.append(__delim_map[stripped])
-        elif stripped == stack[-1]:
+        elif stack and stripped == stack[-1]:
             stack.pop()
-            if not stack:
-                struct = ''.join(struct)
-                remainder = ''.join(i.string for i in get_until_eol(tokens))
-                return struct, remainder
+        
+        if not stack:
+            break
     
-    raise ValueError('String did not start with structure: {}'.format(string))
+    struct = ''.join(struct)
+    remainder = ''.join(i.string for i in get_until_eol(tokens))
+    return struct, remainder
 
 def get_until_eol(tokens):
     """

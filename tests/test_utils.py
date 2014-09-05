@@ -101,6 +101,12 @@ class TestUtils(unittest.TestCase):
             ("'''backslashes \\'''' ", "'''backslashes \\''''"),
             ('b"bytes" #comment', 'b"bytes"'),
             ('u"unicode" "another string"', 'u"unicode"'),
+            ('variable_name', 'variable_name'),
+            ('function_call()', 'function_call'),
+            ('1 + 2', '1'),
+            ('@decorator', '@'),
+            ('"unclosed quotes', '"'),
+            ('(unclosed bracket', '(unclosed bracket'),
             ]
         
         for string, struct in tests:
@@ -114,26 +120,3 @@ class TestUtils(unittest.TestCase):
         result = Utils.extract_structure(io.StringIO(string).readline)
         self.assertEqual(result[0], struct)
         self.assertEqual(result[1], remainder)
-    
-    def test_extract_structure_no_structure(self):
-        """
-        extract_structure() should raise an exception if
-        the sting does not start with a structure
-        """
-        import tokenize
-        import io
-        
-        tests = [
-            'variable_name',
-            'function_call()',
-            '1 + 2',
-            'if Statement:',
-            '@decorator',
-            '*[spliced, list]',
-            '"unclosed quotes',
-            '(unclosed bracket',
-            ]
-        
-        for string in tests:
-            with self.assertRaises((ValueError, tokenize.TokenError)):
-                Utils.extract_structure(io.StringIO(string).readline)
