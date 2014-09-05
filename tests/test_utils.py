@@ -71,14 +71,13 @@ class TestUtils(unittest.TestCase):
     def test_full_tokenize(self):
         """
         full_tokenize() should tokenize the string but keep all whitespace
-        except trailing whitespace
         """
         import io
         
         string = ''' 'string' + [nest, [lists, (tuple,)]] * function_call() + \n line_continuation '''
         result = Utils.full_tokenize(io.StringIO(string).readline)
         result = ''.join(i.string for i in result)
-        self.assertEqual(result, string.rstrip())
+        self.assertEqual(result, string)
     
     def test_extract_structure(self):
         """
@@ -98,7 +97,7 @@ class TestUtils(unittest.TestCase):
             ('{nested: ["structures", ()]} + other_stuff', '{nested: ["structures", ()]}'),
             ('r"raw string" + None', 'r"raw string"'),
             ('"""multiline\ntriple\nquotes""" + 0', '"""multiline\ntriple\nquotes"""'),
-            ("'''backslashes \\'''' ", "'''backslashes \\''''"),
+            ("'''backslashes \\'''' ", "'''backslashes \\'''' "),
             ('b"bytes" #comment', 'b"bytes"'),
             ('u"unicode" "another string"', 'u"unicode"'),
             ('variable_name', 'variable_name'),
@@ -112,7 +111,7 @@ class TestUtils(unittest.TestCase):
         for string, struct in tests:
             result = Utils.extract_structure(io.StringIO(string).readline)
             self.assertEqual(result[0], struct)
-            self.assertEqual(''.join(result), string.rstrip())
+            self.assertEqual(''.join(result), string)
         
         string = '[] + 1\nnext line'
         struct = '[]'

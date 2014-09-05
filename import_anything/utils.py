@@ -96,6 +96,10 @@ def full_tokenize(lines):
                 string = token.line[prev_pos[1] : token.start[1]] + token.string
                 token = token._replace(string = string, start = prev_pos)
             
+            tail = token.line[len(token.string):]
+            if tail.isspace():
+                token = token._replace(string = string + tail, end = (token.end[0], token.end[1] + len(tail)))
+            
             yield token
             prev_pos = token.end
     except tokenize.TokenError as e:
