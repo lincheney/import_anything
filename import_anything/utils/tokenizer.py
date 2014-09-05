@@ -1,82 +1,10 @@
-"""
-Utilities for parsing
-"""
-
-import functools
-import itertools
 import re
+import itertools
 import tokenize
-from io import StringIO
-
-def indent(indent, string, *args, **kwargs):
-    if args or kwargs:
-        string = string.format(*args, **kwargs)
-    output = (' ' * indent) + string
-    if isinstance(string, Block):
-        return Block(output)
-    return output
-
-def strip_indents(string):
-    """
-    Returns ( len(leading whitespace), rest of string )
-    """
-    
-    rest = string.lstrip()
-    return (len(string) - len(rest)), rest
-
-
-def complete_blocks(indent_by = 4, body = 'pass'):
-    """
-    Decorator to wrap Compiler.translate. Use like this:
-
-    class Compiler:
-        @complete_blocks(indent_by = 2)
-        def translate(self, file, block):
-            yield 1, 'normal_line'
-            yield 2, block('def start_a_block():')
-            yield 3, 'unexpected_dedent'
-            ...
-
-    complete_blocks will notice you had an empty block after
-    line #2 and insert a pass statement there, so you end up with:
-
-    normal_line
-    def start_a_block():
-    pass
-    unexpected_dedent
-
-    """
-    return functools.partial(Block.decorator, indent_by = indent_by, body = body)
-
-class Block(str):
-    @staticmethod
-    def decorator(function, indent_by, body):
-        @functools.wraps(function)
-        def wrapped_fn(*args, **kwargs):
-            call = function(*(args + (Block,)), **kwargs)
-            
-            block_indent = -1
-            line_indent = 0
-            for lineno, string in call:
-                line_indent = strip_indents(string)[0]
-                
-                if block_indent >= line_indent:
-                    yield lineno - 1, indent(block_indent + indent_by, body)
-                block_indent = -1
-                
-                if isinstance(string, Block):
-                    block_indent = line_indent
-                yield lineno, str(string)
-            
-            if block_indent >= line_indent:
-                yield lineno, indent(block_indent + indent_by, body)
-        
-        return wrapped_fn
-
 
 def line_generator(lines):
     """
-    ensures each line has a \n except for the last line
+    except for the last line, ensures each line has a \n
     """
     
     lines = iter(lines)
@@ -90,6 +18,13 @@ def line_generator(lines):
             yield prev + '\n'
         prev = l
 
+def get_until_eol(tokens):
+    """
+    Yields tokens until it hits EOF, newlines etc.
+    """
+    end_types = (tokenize.ENDMARKER, tokenize.NL, tokenize.NEWLINE)
+    return itertools.takewhile(lambda t: t.type not in end_types, tokens)
+
 def full_tokenize(lines):
     """
     Same as tokenize.generate_tokens() but non-trailing whitespace is preserved so that
@@ -98,7 +33,9 @@ def full_tokenize(lines):
     Trailing whitespace WILL be removed
     """
     
-    readline = iter(line_generator(lines)).__next__
+    line_store = []
+    readline = line_generator(lines)
+    readline = iter(readline).__next__
     
     tokens = tokenize.generate_tokens(readline)
     prev_pos = (-1, -1)
@@ -122,6 +59,14 @@ def full_tokenize(lines):
             prev_pos = token.end
     except tokenize.TokenError as e:
         if e.args[0] == 'EOF in multi-line statement':
+            return
+        
+        if e.args[0] == 'EOF in multi-line string':
+            #vars = inspect.trace()[-1][0].f_locals
+            #print(vars)
+            #t = tokenize.TokenInfo(tokenize.ERRORTOKEN, vars['contstr'],
+                #prev_pos, (vars['lnum'] - 1, vars['end']), vars['contline'])
+            #print(t)
             return
         raise
 
@@ -162,9 +107,4 @@ def extract_structure(lines):
     remainder = ''.join(i.string for i in get_until_eol(tokens))
     return struct, remainder
 
-def get_until_eol(tokens):
-    """
-    Yields tokens until it hits EOF, newlines etc.
-    """
-    end_types = (tokenize.ENDMARKER, tokenize.NL, tokenize.NEWLINE)
-    return itertools.takewhile(lambda t: t.type not in end_types, tokens)
+__all__ = ['extract_structure', 'full_tokenize']
