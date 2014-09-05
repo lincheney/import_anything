@@ -25,14 +25,14 @@ class HamlCompiler(import_anything.Compiler):
             string = string[len(key) + 1:]
             key = key.strip()
             
-            tokens = []
-            gen = iter(string.split('\n'))
-            for token in utils.full_tokenize(gen.__next__):
-                if token.string.startswith(' '):
+            value = []
+            while string:
+                v, string = utils.extract_structure(iter(string.splitlines()).__next__)
+                if v.startswith(' '):
+                    string = v + string
                     break
-                tokens.append(token.string)
-            value = ''.join(tokens)
-            string = string[len(value):]
+                value.append(v)
+            value = ''.join(value)
             
             yield key, value
     
