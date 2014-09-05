@@ -72,10 +72,9 @@ class TestUtils(unittest.TestCase):
         """
         full_tokenize() should tokenize the string but keep all whitespace
         """
-        import io
         
         string = ''' 'string' + [nest, [lists, (tuple,)]] * function_call() + \n line_continuation '''
-        result = Utils.full_tokenize(io.StringIO(string).readline)
+        result = Utils.full_tokenize(string.splitlines())
         result = ''.join(i.string for i in result)
         self.assertEqual(result, string)
     
@@ -85,7 +84,6 @@ class TestUtils(unittest.TestCase):
         the start of the string and the rest of the remaining line
         Any lines starting after aren't returned
         """
-        import io
         
         tests = [
             ('{} + 1', '{}'),
@@ -109,13 +107,13 @@ class TestUtils(unittest.TestCase):
             ]
         
         for string, struct in tests:
-            result = Utils.extract_structure(io.StringIO(string).readline)
+            result = Utils.extract_structure(string.splitlines())
             self.assertEqual(result[0], struct)
             self.assertEqual(''.join(result), string)
         
         string = '[] + 1\nnext line'
         struct = '[]'
         remainder = ' + 1'
-        result = Utils.extract_structure(io.StringIO(string).readline)
+        result = Utils.extract_structure(string.splitlines())
         self.assertEqual(result[0], struct)
         self.assertEqual(result[1], remainder)

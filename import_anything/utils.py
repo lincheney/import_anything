@@ -74,6 +74,22 @@ class Block(str):
         return wrapped_fn
 
 
+def line_generator(lines):
+    """
+    ensures each line has a \n except for the last line
+    """
+    
+    lines = iter(lines)
+    prev = next(lines, None)
+    while prev is not None:
+        l = next(lines, None)
+        # don't tack on a \n if it has one or is last line
+        if l is None or prev.endswith('\n'):
+            yield prev
+        else:
+            yield prev + '\n'
+        prev = l
+
 def full_tokenize(lines):
     """
     Same as tokenize.generate_tokens() but non-trailing whitespace is preserved so that
@@ -82,7 +98,9 @@ def full_tokenize(lines):
     Trailing whitespace WILL be removed
     """
     
-    tokens = tokenize.generate_tokens(lines)
+    readline = iter(line_generator(lines)).__next__
+    
+    tokens = tokenize.generate_tokens(readline)
     prev_pos = (-1, -1)
     try:
         for token in tokens:
