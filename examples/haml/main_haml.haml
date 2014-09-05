@@ -16,7 +16,15 @@
 %html{'xmlns': "http://www.w3.org/1999/xhtml", "xml:lang": "en", 'lang': "en"}
 
 %script{'type': "text/javascript",
-        'src': "javascripts/script_{}".format(2 + 9)}
+        'src': "javascripts/script_{}".format(2 + 7)}
 
 %div{'id': [item['type'], item['number']], 'class': [item['type'], item['urgency']]}
 %div{'class': [item['type'], item == sortcol and ['sort', sortdir]] } Contents
+
+.item{'class': not item and "empty"}
+
+%html(xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en")
+%a(title=title href=href) Stuff
+%a(title=title){'href': link['href']} Stuff
+%script(type="text/javascript"
+        src="javascripts/script_{}".format(2+7{{))

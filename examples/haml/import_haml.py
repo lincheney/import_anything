@@ -18,6 +18,24 @@ class HamlCompiler(import_anything.Compiler):
         super().__init__(*args, **kwargs)
         print(self.get_source(original_numbers = True))
     
+    def parse_html_attributes(self, string):
+        string = string[1:-1]
+        while string:
+            key = string[:string.find('=')]
+            string = string[len(key) + 1:]
+            key = key.strip()
+            
+            tokens = []
+            gen = iter(string.split('\n'))
+            for token in utils.full_tokenize(gen.__next__):
+                if token.string.startswith(' '):
+                    break
+                tokens.append(token.string)
+            value = ''.join(tokens)
+            string = string[len(value):]
+            
+            yield key, value
+    
     @utils.complete_blocks()
     def translate(self, file, block):
         lineno = 0
@@ -49,13 +67,22 @@ class HamlCompiler(import_anything.Compiler):
                 
                 tag = tag or 'div'
                 
-                attributes = None
-                if string.startswith('{'):
-                    # grab the dict-style attributes
-                    # since it may be multiline, we need to give it the
-                    # other lines from the file too
+                attributes = []
+                while string and string[0] in ('{', '('):
                     gen = iter(itertools.chain([string + '\n'], file))
-                    attributes, string = utils.extract_structure(gen.__next__)
+                    attrs, string = utils.extract_structure(gen.__next__)
+                    
+                    if attrs.startswith('('):
+                        attrs = ', '.join('{!r}:{}'.format(k, v) for k, v in self.parse_html_attributes(attrs))
+                        attrs = '{' + attrs + '}'
+                    attributes.append(attrs)
+                
+                if attributes:
+                    yield lineno, utils.indent(indent, 'attributes = {}')
+                    for a in attributes:
+                        yield lineno, utils.indent(indent, 'attributes.update({})', a)
+                else:
+                    yield lineno, utils.indent(indent, 'attributes = None')
                 
                 # the text
                 if string.startswith('='):
@@ -63,7 +90,7 @@ class HamlCompiler(import_anything.Compiler):
                 else:
                     string = repr(string)
                 
-                line = utils.indent(indent, 'with stack.add_tag({!r}, {}, {!r}, {!r}, {}):', tag, string, tuple(classes), tuple(ids), attributes)
+                line = utils.indent(indent, 'with stack.add_tag({!r}, {}, {!r}, {!r}, attributes):', tag, string, tuple(classes), tuple(ids))
                 yield lineno, block(line)
             
             else:
@@ -92,5 +119,7 @@ if __name__ == '__main__':
         item = dict(type = 'massive', number = 4, urgency = 'urgent'),
         sortcol = None,
         sortdir = '/tmp',
+        href = '/index.html#more-stuff',
+        link = dict(href = '#'),
     )
     print(haml)
