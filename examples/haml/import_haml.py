@@ -150,22 +150,32 @@ class HamlCompiler(import_anything.Compiler):
                     # comment with nested text
                     yield block(utils.indent(indent, 'with stack.add_comment_tag():'))
             
-            elif line and line[0] in '=-~':
-                initial = line[0]
-                # python code; make sure to handle multiline code
-                gen = itertools.chain([line[1:].lstrip() + '\n'], _lines)
-                line = ''.join(self.get_multiline(gen))
-                if initial == '=':
-                    yield utils.indent(indent, 'stack.add_text({}, escape = True)', line)
-                else:
-                    yield utils.indent(indent, line)
+            elif not line:
+                pass
             
-            elif line:
-                # text line
-                if line.startswith('\\'):
-                    line = line[1:]
+            else:
+                match = re.match(r'[=-]|[&!]=', line)
+                if match:
+                    initial = match.group(0)
+                    # python code; make sure to handle multiline code
+                    gen = itertools.chain([line[match.end(0):].lstrip() + '\n'], _lines)
+                    line = ''.join(self.get_multiline(gen))
+                    
+                    if initial == '=':
+                        yield utils.indent(indent, 'stack.add_text({})', line)
+                    elif initial == '&=':
+                        yield utils.indent(indent, 'stack.add_text({}, escape = True)', line)
+                    elif initial == '!=':
+                        yield utils.indent(indent, 'stack.add_text({}, escape = False)', line)
+                    else:
+                        yield utils.indent(indent, line)
                 
-                yield utils.indent(indent, 'stack.add_text({!r})', line)
+                else:
+                    # text line
+                    if line.startswith('\\'):
+                        line = line[1:]
+                    
+                    yield utils.indent(indent, 'stack.add_text({!r}, escape = False)', line)
         
         self.lineno += 1
         # render the tags

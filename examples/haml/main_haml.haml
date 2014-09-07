@@ -66,6 +66,10 @@
   %div
     %h1 Because it's commented out!
 
+%p foo
+-# This is a comment
+%p bar
+
 %p
   = ' '.join(['hi', 'there', 'reader!'])
   = "yo"
@@ -86,3 +90,9 @@
 - links = {'home' : "/",
     'docs' : "/docs",
     'about' : "/about"}
+
+- for i in range(42, 47):
+  %p= i
+%p See, I can count!
+I like cheese &amp; crackers
+!= "I feel <strong>!"

@@ -47,12 +47,12 @@ class Stack:
     def indented(self, string):
         return '{}{}'.format(self.indent * self._indent, string)
     
-    def add_text(self, text, escape = False):
+    def add_text(self, text, escape = True):
         if escape:
             text = escape_xml(str(text))
         self.text.append(self.indented(text))
     
-    def add_comment(self, comment, escape = False):
+    def add_comment(self, comment, escape = True):
         if escape:
             comment = escape_xml(comment)
         self.text.append(self.indented('<!--{} -->'.format(comment)))
