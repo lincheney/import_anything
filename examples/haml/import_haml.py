@@ -142,7 +142,7 @@ class HamlCompiler(import_anything.Compiler):
                     string = repr(string)
                 
                 if void or inline_text:
-                    template = 'stack.add_tag({tag!r}, {text}, {classes!r}, {ids!r}, void = {void!r}, attributes = attributes, escape = {escape})'
+                    template = 'stack.add_tag({tag!r}, {text}, {classes!r}, {ids!r}, void = {void!r}, attributes = attributes, escape = {escape}, inline_text = {inline_text!r})'
                 
                 else:
                     template = 'with stack.add_tag_context({tag!r}, {text}, {classes!r}, {ids!r}, attributes = attributes, escape = {escape}):'

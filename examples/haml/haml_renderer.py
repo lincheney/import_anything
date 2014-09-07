@@ -1,7 +1,7 @@
 import contextlib
 import itertools
 import collections
-from xml.sax.saxutils import escape as escape_xml
+from html import escape as escape_html
 
 class Stack:
     _indent = ' ' * 2
@@ -49,12 +49,10 @@ class Stack:
     
     def add_text(self, text, escape = True):
         if escape:
-            text = escape_xml(str(text))
+            text = escape_html(str(text))
         self.text.append(self.indented(text))
     
-    def add_comment(self, comment, escape = True):
-        if escape:
-            comment = escape_xml(comment)
+    def add_comment(self, comment):
         self.text.append(self.indented('<!--{} -->'.format(comment)))
     
     @contextlib.contextmanager
@@ -83,9 +81,9 @@ class Stack:
                 attributes_list.append(' {}'.format(k))
             elif k == 'data' and isinstance(v, dict):
                 for suffix, value in v.items():
-                    attributes_list.append(' data-{}={!r}'.format(suffix.replace('_', '-'), escape_xml(str(value))))
+                    attributes_list.append(' data-{}={!r}'.format(suffix.replace('_', '-'), escape_html(str(value))))
             else:
-                attributes_list.append(' {}={!r}'.format(k, escape_xml(str(v))))
+                attributes_list.append(' {}={!r}'.format(k, escape_html(str(v))))
         attributes_string = ''.join(attributes_list)
         
         # place holder for open tag
@@ -94,32 +92,32 @@ class Stack:
         open_tag = self.indented('<{}{}>'.format(name, attributes_string))
         close_tag = '</{}>'.format(name)
         
-        if void or name in self.VOID_ELEMENTS:
-            self.text[-1] = self.indented('<{}{}>'.format(name, attributes_string))
-        
-        else:
+        if inline_text:
             if escape:
-                text = escape_xml(str(text))
+                text = escape_html(str(text))
             self.text[-1] = '{}{}{}'.format(open_tag, text, close_tag)
         
-        return open_tag, close_tag, attributes_string
+        elif void or name in self.VOID_ELEMENTS:
+            self.text[-1] = self.indented('<{}{}>'.format(name, attributes_string))
+        
+        return open_tag, close_tag
     
     @contextlib.contextmanager
     def add_tag_context(self, name, *args, **kwargs):
-        open_tag, close_tag, attributes_string = self.add_tag(name, *args, **kwargs)
+        open_tag, close_tag = self.add_tag(name, *args, **kwargs)
         index = len(self.text) - 1
         
         self.indent += 1
         yield
         self.indent -= 1
         
-        if len(self.text) == index + 1:
-            self.text[index] = self.indented('<{}{}></{}>'.format(name, attributes_string, name))
-        
-        else:
+        if len(self.text) != index + 1:
             # put open tag in placeholder
             self.text[index] = open_tag
             self.text.append(self.indented(close_tag))
+        
+        elif name not in self.VOID_ELEMENTS:
+            self.text[index] = '{}{}'.format(open_tag, close_tag)
     
     def render(self):
         return '\n'.join(i for i in self.text if i is not None)
