@@ -528,6 +528,10 @@ Trailing whitespace is included
     NAME       'a '          (1, 0) (1, 2)
     NEWLINE    '\\n'          (1, 2) (1, 3)
     NAME       'b '          (2, 0) (2, 2)
+
+Multiline strings
+    >>> dump_tokens("''' multiline \\n string '''")
+    STRING     "''' multiline \\n string '''" (1, 0) (2, 11)
 """
 
 import tokenize

@@ -152,7 +152,9 @@ def full_tokenize(lines):
                 spos, epos, pos = (lnum, start), (lnum, end), end
                 if start == end:
                     continue
-                token, initial = line[start:end], line[pseudomatch.start(1)]
+                token = pseudomatch.group(0)
+                token_stripped = pseudomatch.group(1)
+                initial = token_stripped[0]
 
                 if (initial in numchars or                  # ordinary number
                     (initial == '.' and token != '.' and token != '...')):
@@ -165,8 +167,8 @@ def full_tokenize(lines):
                     assert not token.endswith("\n")
                     yield TokenInfo(tokenize.COMMENT, token, spos, epos, line)
                 
-                elif token in tokenize.triple_quoted:
-                    endprog = tokenize._compile(tokenize.endpats[token] + r'[ \f\t]*')
+                elif token_stripped in tokenize.triple_quoted:
+                    endprog = tokenize._compile(tokenize.endpats[token_stripped] + r'[ \f\t]*')
                     endmatch = endprog.match(line, pos)
                     if endmatch:                           # all on one line
                         pos = endmatch.end(0)
@@ -178,7 +180,7 @@ def full_tokenize(lines):
                         contline = line
                         break
                 
-                elif any(i in tokenize.single_quoted for i in (initial, token[:2], token[:3])):
+                elif any(i in tokenize.single_quoted for i in (initial, token_stripped[:2], token_stripped[:3])):
                     if token[-1] == '\n':                  # continued string
                         strstart = (lnum, start)
                         endprog = tokenize._compile(tokenize.endpats[initial] or
