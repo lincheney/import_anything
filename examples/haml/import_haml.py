@@ -113,6 +113,7 @@ class HamlCompiler(import_anything.Compiler):
                 
                 yield utils.indent(indent, 'stack.add_text({})', line)
         
+        self.lineno += 1
         # render the tags
         yield utils.indent(2, 'return stack.render()')
         # magic to allow using **kwargs as if they were locals
