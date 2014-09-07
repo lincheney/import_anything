@@ -89,6 +89,11 @@ def full_tokenize(lines):
     Where tokenize.tokenize() raises an error for unterminated
     multi line strings, full_tokenize() just returns the string
     so far in one ERRORTOKEN token
+    
+    Whitespace is (always) attached to the token preceding it
+    The exception is for leading whitespace on a line
+    which is attached to the first token of the line
+    e.g. ' a b c' -> (' a ', 'b ', 'c')
     """
     
     TokenInfo = tokenize.TokenInfo
