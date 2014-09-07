@@ -119,6 +119,12 @@ class HamlCompiler(import_anything.Compiler):
                 )
                 yield block(line)
             
+            elif line.startswith('/'):
+                if line[1:].strip():
+                    yield utils.indent(indent, 'stack.add_comment({!r})', line[1:])
+                else:
+                    yield block(utils.indent(indent, 'with stack.add_comment_tag():'))
+            
             else:
                 # text line
                 if line.startswith('='):

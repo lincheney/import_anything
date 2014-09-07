@@ -49,6 +49,17 @@ class Stack:
     def add_text(self, text):
         self.text.append(self.indented(text))
     
+    def add_comment(self, comment):
+        self.text.append(self.indented('<!--{} -->'.format(comment)))
+    
+    @contextlib.contextmanager
+    def add_comment_tag(self):
+        self.text.append(self.indented('<!--'))
+        self.indent += 1
+        yield
+        self.indent -= 1
+        self.text.append(self.indented('-->'))
+    
     @contextlib.contextmanager
     def add_tag(self, name, text, classes, ids, attributes, void):
         attributes = attributes or {}
