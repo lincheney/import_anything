@@ -95,7 +95,7 @@ class Stack:
         open_tag = self.indented('<{}{}>'.format(name, attributes_string))
         close_tag = '</{}>'.format(name)
         
-        if len(self.text) == index + 2 and not self.is_tag(index + 1):
+        if len(self.text) == index + 2 and text != '' and not self.is_tag(index + 1):
             # only one text child
             self.text[index + 1] = '{}{}{}'.format(open_tag, self.text[index + 1].lstrip(), close_tag)
         
