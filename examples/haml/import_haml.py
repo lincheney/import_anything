@@ -60,7 +60,10 @@ class HamlCompiler(import_anything.Compiler):
                 yield line
         
         for line in self._translate(line_generator(), block):
-            yield self.lineno, line
+            if isinstance(line, tuple):
+                yield line
+            else:
+                yield self.lineno, line
     
     def get_multiline(self, lines):
         eol = (tokenize.ENDMARKER, tokenize.NEWLINE)
@@ -98,6 +101,7 @@ class HamlCompiler(import_anything.Compiler):
                 tag = tag or 'div'
                 
                 # extract the attributes, both dict- and html-style
+                lineno = self.lineno
                 attributes = []
                 while string and string[0] in ('{', '('):
                     gen = itertools.chain([string + '\n'], _lines)
@@ -109,21 +113,22 @@ class HamlCompiler(import_anything.Compiler):
                         attrs = '{' + attrs + '}'
                     attributes.append(attrs)
                 
+                # assign all the attributes
+                if attributes:
+                    yield lineno, utils.indent(indent, 'attributes = {}')
+                    for a in attributes:
+                        yield lineno, utils.indent(indent, 'attributes.update({})', a)
+                else:
+                    yield lineno, utils.indent(indent, 'attributes = None')
+                
                 # void tag
                 void = False
                 if string.startswith('/'):
                     string = string[1:]
                     void = True
                 
-                # assign all the attributes
-                if attributes:
-                    yield utils.indent(indent, 'attributes = {}')
-                    for a in attributes:
-                        yield utils.indent(indent, 'attributes.update({})', a)
-                else:
-                    yield utils.indent(indent, 'attributes = None')
-                
                 # the text
+                lineno = self.lineno
                 escape = False
                 inline_text = True
                 if string.startswith('='):
@@ -153,7 +158,7 @@ class HamlCompiler(import_anything.Compiler):
                 )
                 if not (void or inline_text):
                     line = block(line)
-                yield line
+                yield lineno, line
             
             elif line.startswith('/'):
                 # comment
@@ -170,19 +175,20 @@ class HamlCompiler(import_anything.Compiler):
             else:
                 match = re.match(r'[=-]|([&!]=)', line)
                 if match:
+                    lineno = self.lineno
                     initial = match.group(0)
                     # python code; make sure to handle multiline code
                     gen = itertools.chain([line[match.end(0):].lstrip() + '\n'], _lines)
                     line = ''.join(self.get_multiline(gen))
                     
                     if initial == '=':
-                        yield utils.indent(indent, 'stack.add_text({})', line)
+                        yield lineno, utils.indent(indent, 'stack.add_text({})', line)
                     elif initial == '&=':
-                        yield utils.indent(indent, 'stack.add_text({}, escape = True)', line)
+                        yield lineno, utils.indent(indent, 'stack.add_text({}, escape = True)', line)
                     elif initial == '!=':
-                        yield utils.indent(indent, 'stack.add_text({}, escape = False)', line)
+                        yield lineno, utils.indent(indent, 'stack.add_text({}, escape = False)', line)
                     else:
-                        yield utils.indent(indent, line)
+                        yield lineno, utils.indent(indent, line)
                 
                 else:
                     # text line
