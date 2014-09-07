@@ -1,98 +1,82 @@
-%gee
-  %whiz
-    Wow this is cool!
+%html
+  %body
+    %p
+    %p with inline text
+    %p
+        with nested text
+    <p>Explicit HTML style</p>
+    / html comment
+    /
+      html comment with
+      .nested.tags
+    -# python comment
+    -'''
+    tags nested in a -# comment are not supported
+    use a docstring instead
+    '''
 
-%p
-  <div id="blah">Blah!</div>
+    %h1
+      Backslash escapes
+      \% percent
+      \= equals sign
+      \\ backslash
 
-%title
-  = title
-  \= title
+    %span.tag.with.classes
+    %span.tag#with#ids
+    .div.by#default
+    #more.implicit.divs
+    
+    %h1
+      Attributes
 
-%one
-  %two
-    %three Hey there
+      %tag{'attribute-style': '{}-style'}
+      {}-style attributes must be in Python style, not Ruby
+      %tag(attribute-style='html-style')
 
-%html{'xmlns': "http://www.w3.org/1999/xhtml", "xml:lang": "en", 'lang': "en"}
+      %tag(a='a'){'b': 'b'} Mixing up attribute styles
+      %tag(class='clobbered'){'class': 'clobbered as well'}{'class': 'finally'}
+        Whatever is specified last is used
 
-%script{'type': "text/javascript",
-        'src': "javascripts/script_{}".format(2 + 7)}
+      %tag{'attributes': 'multiline',
+        'more-attributes': 'on second line'}
+      %tag(attributes='multiline'
+        more-attributes='on second line')
 
-%div{'id': [item['type'], item['number']], 'class': [item['type'], item['urgency']]}
-%div{'class': [item['type'], item == sortcol and ['sort', sortdir]] } Contents
+      %tag.css{'class': 'and attribute style'}
+      %tag(class=['list', 'of', 'classes'])
+      %tag{'id': ['list', 'of', 'ids']}
+      %tag(class=['nested', ['list', 'of', 'classes']])
 
-.item{'class': not item and "empty"}
+      %tag(boolean attributes)
+      / but you can't do %tag{'boolean', 'attributes'}
+      %tag{'explicit-true': True, 'explicit-false': False}
+      %tag{'data': {'attributes': 'stuff', 'entry': 'thing'}}
 
-%html(xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en")
-%a(title=title href=href) Stuff
-%a(title=title){'href': link['href']} Stuff
-%script(type="text/javascript"
-        src="javascripts/script_{}".format(2 + 7))
+    %h1
+      Void tags
+      %tag.void/
+      %tag.void{'with': 'attributes'}/
+      %h2
+        Tags void by default
+        % br
+        %meta
+        %img
+        \...
 
-%input{'selected': True}
-%input{'selected': False}
-%input(selected)
-%input(selected=True)
+    %h1
+      Evaluated Python code
+      = 'this code will be evaluated ' + 'and inserted'
+      - 'this will only be evaluated'
+      %p= ' '.join(['python', 'in', 'a', 'tag'])
+      = '<html> is escaped, but only <, >, \' and "'
 
-%a{'href': "/posts", 'data': {'author_id': 123}} Posts By Author
+      - x = 12345
+      %p= x
+      - for i in range(5):
+        %p#element{'id': i}
 
-%div#things
-  %span#rice Chicken Fried
-  %p.beans{ 'food' : 'true' } The magical fruit
-  %h1.class.otherclass#id La La La
-
-%div#content
-  %div.articles
-    %div.article.title Doogie Howser Comes Out
-    %div.article.date 2006-11-05
-    %div.article.entry
-      Neil Patrick Harris would like to dispel any rumors that he is straight
-
-%div#Article.article.entry{'id' : article['number'], 'class' : article['visibility']}
-
-#collection
-  .item
-    .description What a cool item!
-
-%br/
-%meta{'http-equiv' : 'Content-Type', 'content' : 'text/html'}/
-
-%peanutbutterjelly
-  / This is the peanutbutterjelly element
-  I like sandwiches!
-
-/
-  %p This doesn't render...
-  %div
-    %h1 Because it's commented out!
-
-%p foo
--# This is a comment
-%p bar
-
-%p
-  = ' '.join(['hi', 'there', 'reader!'])
-  = "yo"
-
-= '<script>alert("I\'m evil!");</script>'
-%p= "hello"
-= link_to_remote("Add to cart",
-    url = { 'action' : "add", 'id' : product['id'] },
-    update = { 'success' : "cart", 'failure' : "error" })
-
-- foo = "hello"
-- foo += " there"
-- foo += " you!"
-%p= foo
-
-
-
-- links = {'home' : "/",
-    'docs' : "/docs",
-    'about' : "/about"}
-
-- for i in range(42, 47):
-  %p= i
-%p See, I can count!
-I like cheese &amp; crackers
-!= "I feel <strong>!"
+      != 'unescaped <strong>html</strong>'
+      %p= '\n'.join((
+        'automatic multiline',
+        'python statements',
+      ))
