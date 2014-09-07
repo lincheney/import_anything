@@ -59,7 +59,16 @@ class Stack:
         id = '_'.join(self.combine_attribute('id', ids, attributes))
         if id:
             attributes['id'] = id
-        attributes_string = ''.join(' {}={!r}'.format(k, str(v)) for k, v in attributes.items())
+        
+        attributes_list = []
+        for k, v in attributes.items():
+            if v is False:
+                continue
+            elif v is True:
+                attributes_list.append(' {}'.format(k))
+            else:
+                attributes_list.append(' {}={!r}'.format(k, str(v)))
+        attributes_string = ''.join(attributes_list)
         
         # place holder for open tag
         index = len(self.text)

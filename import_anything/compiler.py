@@ -80,13 +80,13 @@ class Compiler:
         data = self.data.split('\n')
         
         if original_numbers:
+            number_width = len(str(max(self.line_numbers)))
             data = zip(self.line_numbers[1:], data)
             template = '{lineno} {line}'
-            number_width = len(str(max(self.line_numbers)))
         elif line_numbers:
+            number_width = len(str(len(data) - 1))
             data = enumerate(data, 1)
             template = '{lineno} {line}'
-            number_width = len(str(len(data) - 1))
         else:
             data = enumerate(data, 1)
             template = '{line}'
