@@ -66,7 +66,7 @@ class Stack:
         self.text.append(self.indented('-->'))
     
     @contextlib.contextmanager
-    def add_tag(self, name, text, classes, ids, attributes, void):
+    def add_tag(self, name, text, classes, ids, attributes, void, escape = True):
         attributes = attributes or {}
         
         cls = ' '.join(self.combine_attribute('class', classes, attributes))
@@ -84,9 +84,9 @@ class Stack:
                 attributes_list.append(' {}'.format(k))
             elif k == 'data' and isinstance(v, dict):
                 for suffix, value in v.items():
-                    attributes_list.append(' data-{}={!r}'.format(suffix.replace('_', '-'), str(value)))
+                    attributes_list.append(' data-{}={!r}'.format(suffix.replace('_', '-'), escape_xml(str(value))))
             else:
-                attributes_list.append(' {}={!r}'.format(k, str(v)))
+                attributes_list.append(' {}={!r}'.format(k, escape_xml(str(v))))
         attributes_string = ''.join(attributes_list)
         
         # place holder for open tag
@@ -95,6 +95,8 @@ class Stack:
         
         self.indent += 1
         if text != '':
+            if escape:
+                text = escape_xml(str(text))
             self.text.append(self.indented(text))
         
         yield

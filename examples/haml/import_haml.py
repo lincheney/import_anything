@@ -124,20 +124,23 @@ class HamlCompiler(import_anything.Compiler):
                     yield utils.indent(indent, 'attributes = None')
                 
                 # the text
+                escape = False
                 if string.startswith('='):
                     # make sure to handle multiline code
                     gen = itertools.chain([string[1:] + '\n'], _lines)
                     string = ''.join(self.get_multiline(gen))
+                    escape = True
                 else:
                     string = repr(string)
                 
-                template = 'with stack.add_tag({tag!r}, {text}, {classes!r}, {ids!r}, void = {void!r}, attributes = attributes):'
+                template = 'with stack.add_tag({tag!r}, {text}, {classes!r}, {ids!r}, void = {void!r}, attributes = attributes, escape = {escape}):'
                 line = utils.indent(indent, template,
                     tag = tag,
                     text = string,
                     classes = tuple(classes),
                     ids = tuple(ids),
                     void = void,
+                    escape = escape,
                 )
                 yield block(line)
             
@@ -154,7 +157,7 @@ class HamlCompiler(import_anything.Compiler):
                 pass
             
             else:
-                match = re.match(r'[=-]|[&!]=', line)
+                match = re.match(r'[=-]|([&!]=)', line)
                 if match:
                     initial = match.group(0)
                     # python code; make sure to handle multiline code
