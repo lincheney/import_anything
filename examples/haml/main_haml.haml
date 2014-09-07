@@ -75,3 +75,14 @@
 = link_to_remote("Add to cart",
     url = { 'action' : "add", 'id' : product['id'] },
     update = { 'success' : "cart", 'failure' : "error" })
+
+- foo = "hello"
+- foo += " there"
+- foo += " you!"
+%p= foo
+
+
+
+- links = {'home' : "/",
+    'docs' : "/docs",
+    'about' : "/about"}

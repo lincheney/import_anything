@@ -150,13 +150,16 @@ class HamlCompiler(import_anything.Compiler):
                     # comment with nested text
                     yield block(utils.indent(indent, 'with stack.add_comment_tag():'))
             
-            elif line.startswith('='):
+            elif line.startswith('=') or line.startswith('-'):
                 # python code; make sure to handle multiline code
-                gen = itertools.chain([line[1:] + '\n'], _lines)
+                gen = itertools.chain([line[1:].lstrip() + '\n'], _lines)
                 line = ''.join(self.get_multiline(gen))
-                yield utils.indent(indent, 'stack.add_text({}, escape = True)', line)
+                if line.startswith('-'):
+                    yield utils.indent(indent, 'stack.add_text({}, escape = True)', line)
+                else:
+                    yield utils.indent(indent, line)
             
-            else:
+            elif line:
                 # text line
                 if line.startswith('\\'):
                     line = line[1:]
