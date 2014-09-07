@@ -26,6 +26,7 @@ Original code from: Lib/tokenize.py
 """
 
 import re
+import io
 import itertools
 import tokenize
 
@@ -39,14 +40,18 @@ def get_until_eol(tokens):
 __delim_map = {'{': '}', '[': ']', '(': ')'}
 def extract_structure(lines):
     """
-    Extract the next token in lines
-    If the next token is an opening bracket, it extracts up to the next matching
-    bracket
-    @lines should be a callable returning lines
+    Extract the next token in lines or, 
+    if beginning with a bracket ([{, extract the string until
+    the matching closing bracket }])
+    
+    lines can be a string
+    or an iterable yield lines (remember to keep trailing line endings)
+    
     Returns (structure, remainder of last extracted line)
     
     e.g.
-    extract_structure('[1, 2, 3] + [4]\nprint()') == ('[1, 2, 3]', ' + [4]')
+    >>> extract_structure('[1, 2, 3] + [4]\\nprint()')
+    ('[1, 2, 3] ', '+ [4]')
     
     Note that the last line, print(), wasn't returned since the structure
     ended on the previous line
@@ -78,6 +83,8 @@ def full_tokenize(lines):
     
     lines can be any iterable (instead of a readline() method)
     but you should make sure that the line endings are preserved
+    If lines is a string, it is automatically wrapped in a
+    io.StringIO
     
     Where tokenize.tokenize() raises an error for unterminated
     multi line strings, full_tokenize() just returns the string
@@ -93,6 +100,8 @@ def full_tokenize(lines):
     contline = None
     
     lnum = 1
+    if isinstance(lines, str):
+        lines = io.StringIO(lines)
     for lnum, line in enumerate(lines, 1):
         if not line:
             break

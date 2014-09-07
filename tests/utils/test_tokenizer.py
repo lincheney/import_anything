@@ -40,14 +40,14 @@ class TestTokenizer(unittest.TestCase):
             ]
         
         for string, struct in tests:
-            result = Utils.extract_structure(string.splitlines(True))
+            result = Utils.extract_structure(string)
             self.assertEqual(result[0], struct)
             self.assertEqual(''.join(result), string)
         
         string = '[] + 1\nnext line'
         struct = '[] '
         remainder = '+ 1'
-        result = Utils.extract_structure(string.splitlines(True))
+        result = Utils.extract_structure(string)
         self.assertEqual(result[0], struct)
         self.assertEqual(result[1], remainder)
 

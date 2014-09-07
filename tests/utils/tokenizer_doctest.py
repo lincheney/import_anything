@@ -530,7 +530,6 @@ Trailing whitespace is included
     NAME       'b '          (2, 0) (2, 2)
 """
 
-import io
 import tokenize
 from import_anything import utils as Utils
 
@@ -539,9 +538,8 @@ def dump_tokens(s):
 
     The ENDMARKER is omitted.
     """
-    f = io.StringIO(s)
     strings = []
-    for type, token, start, end, line in Utils.full_tokenize(f):
+    for type, token, start, end, line in Utils.full_tokenize(s):
         if type == tokenize.ENDMARKER:
             break
         type = tokenize.tok_name[type]
