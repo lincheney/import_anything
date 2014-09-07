@@ -12,6 +12,19 @@ class TestCompleteBlocks(unittest.TestCase):
         @complete_blocks(indent_by = 2, body = 'pass')
         def source(block):
             yield 1, block('empty block:')
+            yield 1, 'next statement'
+        
+        result = list(source())
+        self.assertEqual(result, [(1, 'empty block:'), (1, '  pass'), (1, 'next statement')])
+    
+    def test_ending_block(self):
+        """
+        complete_blocks() should append 'pass' to the last (incomplete) block
+        """
+        
+        @complete_blocks(indent_by = 2, body = 'pass')
+        def source(block):
+            yield 1, block('empty block:')
         
         result = list(source())
         self.assertEqual(result, [(1, 'empty block:'), (1, '  pass')])

@@ -33,16 +33,18 @@ class Block(str):
             
             block_indent = -1
             line_indent = 0
+            last_lineno = 0
             for lineno, string in call:
                 line_indent = strip_indents(string)[0]
                 
                 if block_indent >= line_indent:
-                    yield lineno - 1, indent(block_indent + indent_by, body)
+                    yield last_lineno, indent(block_indent + indent_by, body)
                 block_indent = -1
                 
                 if isinstance(string, Block):
                     block_indent = line_indent
                 yield lineno, str(string)
+                last_lineno = lineno
             
             if block_indent >= line_indent:
                 yield lineno, indent(block_indent + indent_by, body)
