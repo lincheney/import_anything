@@ -50,7 +50,7 @@ class Stack:
         self.text.append(self.indented(text))
     
     @contextlib.contextmanager
-    def add_tag(self, name, text, classes, ids, attributes):
+    def add_tag(self, name, text, classes, ids, attributes, void):
         attributes = attributes or {}
         
         cls = ' '.join(self.combine_attribute('class', classes, attributes))
@@ -86,7 +86,7 @@ class Stack:
         self.indent -= 1
         
         if len(self.text) == index + 1:
-            if name in self.VOID_ELEMENTS:
+            if void or name in self.VOID_ELEMENTS:
                 self.text[index] = self.indented('<{}{}>'.format(name, attributes_string))
             else:
                 self.text[index] = self.indented('<{}{}></{}>'.format(name, attributes_string, name))

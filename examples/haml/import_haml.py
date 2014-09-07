@@ -91,6 +91,11 @@ class HamlCompiler(import_anything.Compiler):
                         attrs = '{' + attrs + '}'
                     attributes.append(attrs)
                 
+                void = False
+                if string.startswith('/'):
+                    string = string[1:]
+                    void = True
+                
                 if attributes:
                     yield utils.indent(indent, 'attributes = {}')
                     for a in attributes:
@@ -104,7 +109,14 @@ class HamlCompiler(import_anything.Compiler):
                 else:
                     string = repr(string)
                 
-                line = utils.indent(indent, 'with stack.add_tag({!r}, {}, {!r}, {!r}, attributes):', tag, string, tuple(classes), tuple(ids))
+                template = 'with stack.add_tag({tag!r}, {text}, {classes!r}, {ids!r}, void = {void!r}, attributes = attributes):'
+                line = utils.indent(indent, template,
+                    tag = tag,
+                    text = string,
+                    classes = tuple(classes),
+                    ids = tuple(ids),
+                    void = void,
+                )
                 yield block(line)
             
             else:
@@ -137,5 +149,6 @@ if __name__ == '__main__':
         sortdir = '/tmp',
         href = '/index.html#more-stuff',
         link = dict(href = '#'),
+        article = dict(number = 27, visibility = 'visible'),
     )
     print(haml)
