@@ -81,15 +81,19 @@ class Compiler:
         
         if original_numbers:
             data = zip(self.line_numbers[1:], data)
-            template = '{lineno:2} {line}'
+            template = '{lineno} {line}'
+            number_width = len(str(max(self.line_numbers)))
         elif line_numbers:
             data = enumerate(data, 1)
-            template = '{lineno:2} {line}'
+            template = '{lineno} {line}'
+            number_width = len(str(len(data) - 1))
         else:
             data = enumerate(data, 1)
             template = '{line}'
+            number_width = 0
         
         for lineno, line in data:
+            lineno = str(lineno).rjust(number_width)
             source.append(template.format(lineno = lineno, line = line) )
         return '\n'.join(source)
     
