@@ -43,7 +43,7 @@ brevity.
     OP         ':'           (1, 8) (1, 9)
     NEWLINE    '\\n'          (1, 9) (1, 10)
     COMMENT    '    # NL'    (2, 0) (2, 8)
-    NL         '\\n'          (2, 8) (2, 9)
+    NEWLINE    '\\n'          (2, 8) (2, 9)
     NAME       '    True '   (3, 0) (3, 9)
     OP         '= '          (3, 9) (3, 11)
     NAME       'False '      (3, 11) (3, 17)

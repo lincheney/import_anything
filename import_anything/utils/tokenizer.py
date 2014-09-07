@@ -140,9 +140,9 @@ def full_tokenize(lines):
                     comment_token = line[start[1]:].rstrip('\r\n')
                     nl_pos = len(comment_token)
                     yield TokenInfo(tokenize.COMMENT, comment_token, start, (lnum, nl_pos), line)
-                    yield TokenInfo(tokenize.NL, line[nl_pos:], (lnum, nl_pos), (lnum, len(line)), line)
+                    yield TokenInfo(tokenize.NEWLINE, line[nl_pos:], (lnum, nl_pos), (lnum, len(line)), line)
                 else:
-                    yield TokenInfo(tokenize.NL, line[start[1]:], start, (lnum, len(line)), line)
+                    yield TokenInfo(tokenize.NEWLINE, line[start[1]:], start, (lnum, len(line)), line)
                 continue
             pos = 0
 
