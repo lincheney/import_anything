@@ -26,7 +26,7 @@ class HamlCompiler(import_anything.Compiler):
         Yields key,value pairs
         """
         
-        string = string[1:-1]
+        string = string[1:-1].replace('\n', ' ')
         while string:
             index = string.find('=')
             if index == -1:
