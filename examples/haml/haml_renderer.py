@@ -66,6 +66,9 @@ class Stack:
                 continue
             elif v is True:
                 attributes_list.append(' {}'.format(k))
+            elif k == 'data' and isinstance(v, dict):
+                for suffix, value in v.items():
+                    attributes_list.append(' data-{}={!r}'.format(suffix.replace('_', '-'), str(value)))
             else:
                 attributes_list.append(' {}={!r}'.format(k, str(v)))
         attributes_string = ''.join(attributes_list)
