@@ -72,9 +72,9 @@ class HamlCompiler(import_anything.Compiler):
     
     def _translate(self, _lines, block):
         # wrap all the code in a _render function
+        yield 'import sys'
+        yield 'Stack = sys.modules[{!r}].Stack'.format(__name__)
         yield block('def _render():')
-        yield utils.indent(2, 'import haml_renderer')
-        yield utils.indent(2, 'stack = haml_renderer.Stack()')
         
         for line in _lines:
             indent, line = utils.strip_indents(line.rstrip('\n'))
@@ -115,11 +115,11 @@ class HamlCompiler(import_anything.Compiler):
                 
                 # assign all the attributes
                 if attributes:
-                    yield lineno, utils.indent(indent, 'attributes = {}')
+                    yield lineno, utils.indent(indent, '__attributes = {}')
                     for a in attributes:
-                        yield lineno, utils.indent(indent, 'attributes.update({})', a)
+                        yield lineno, utils.indent(indent, '__attributes.update({})', a)
                 else:
-                    yield lineno, utils.indent(indent, 'attributes = None')
+                    yield lineno, utils.indent(indent, '__attributes = None')
                 
                 # void tag
                 void = False
@@ -142,10 +142,10 @@ class HamlCompiler(import_anything.Compiler):
                     string = repr(string)
                 
                 if void or inline_text:
-                    template = 'stack.add_tag({tag!r}, {text}, {classes!r}, {ids!r}, void = {void!r}, attributes = attributes, escape = {escape}, inline_text = {inline_text!r})'
+                    template = '__stack.add_tag({tag!r}, {text}, {classes!r}, {ids!r}, void = {void!r}, attributes = __attributes, escape = {escape}, inline_text = {inline_text!r})'
                 
                 else:
-                    template = 'with stack.add_tag_context({tag!r}, {text}, {classes!r}, {ids!r}, attributes = attributes, escape = {escape}):'
+                    template = 'with __stack.add_tag_context({tag!r}, {text}, {classes!r}, {ids!r}, attributes = __attributes, escape = {escape}):'
                 
                 line = utils.indent(indent, template,
                     tag = tag,
@@ -164,10 +164,10 @@ class HamlCompiler(import_anything.Compiler):
                 # comment
                 if line[1:].strip():
                     # one line comment
-                    yield utils.indent(indent, 'stack.add_comment({!r})', line[1:])
+                    yield utils.indent(indent, '__stack.add_comment({!r})', line[1:])
                 else:
                     # comment with nested text
-                    yield block(utils.indent(indent, 'with stack.add_comment_tag():'))
+                    yield block(utils.indent(indent, 'with __stack.add_comment_tag():'))
             
             elif not line:
                 pass
@@ -182,11 +182,11 @@ class HamlCompiler(import_anything.Compiler):
                     line = ''.join(self.get_multiline(gen))
                     
                     if initial == '=':
-                        yield lineno, utils.indent(indent, 'stack.add_text({})', line)
+                        yield lineno, utils.indent(indent, '__stack.add_text({})', line)
                     elif initial == '&=':
-                        yield lineno, utils.indent(indent, 'stack.add_text({}, escape = True)', line)
+                        yield lineno, utils.indent(indent, '__stack.add_text({}, escape = True)', line)
                     elif initial == '!=':
-                        yield lineno, utils.indent(indent, 'stack.add_text({}, escape = False)', line)
+                        yield lineno, utils.indent(indent, '__stack.add_text({}, escape = False)', line)
                     else:
                         yield lineno, utils.indent(indent, line)
                 
@@ -195,18 +195,23 @@ class HamlCompiler(import_anything.Compiler):
                     if line.startswith('\\'):
                         line = line[1:]
                     
-                    yield utils.indent(indent, 'stack.add_text({!r}, escape = False)', line)
+                    yield utils.indent(indent, '__stack.add_text({!r}, escape = False)', line)
         
         self.lineno += 1
         # render the tags
-        yield utils.indent(2, 'return stack.render()')
+        yield utils.indent(2, 'return __stack.render()')
         # magic to allow using **kwargs as if they were locals
-        yield 'render = lambda **kwa: eval(_render.__code__, kwa)'
+        yield '''
+def render(**kwargs):
+    kwargs['__stack'] = Stack()
+    return eval(_render.__code__, kwargs)
+'''
 
 loader = import_anything.Loader.factory(compiler = HamlCompiler, recompile = True)
 import_anything.Finder.register(loader, ['.haml'])
 
 if __name__ == '__main__':
+    from haml_renderer import Stack
     import main_haml
     
     haml = main_haml.render(
@@ -221,3 +226,6 @@ if __name__ == '__main__':
         product = dict(id = 3),
     )
     print(haml)
+
+else:
+    from .haml_renderer import Stack
