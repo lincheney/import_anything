@@ -65,3 +65,13 @@
   %p This doesn't render...
   %div
     %h1 Because it's commented out!
+
+%p
+  = ' '.join(['hi', 'there', 'reader!'])
+  = "yo"
+
+= '<script>alert("I\'m evil!");</script>'
+%p= "hello"
+= link_to_remote("Add to cart",
+    url = { 'action' : "add", 'id' : product['id'] },
+    update = { 'success' : "cart", 'failure' : "error" })

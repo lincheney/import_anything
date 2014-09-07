@@ -30,12 +30,11 @@ import io
 import itertools
 import tokenize
 
-def get_until_eol(tokens):
+def get_until_eol(tokens, eol = (tokenize.ENDMARKER, tokenize.NL, tokenize.NEWLINE)):
     """
     Yields tokens until it hits EOF, newlines etc.
     """
-    end_types = (tokenize.ENDMARKER, tokenize.NL, tokenize.NEWLINE)
-    return itertools.takewhile(lambda t: t.type not in end_types, tokens)
+    return itertools.takewhile(lambda t: t.type not in eol, tokens)
 
 __delim_map = {'{': '}', '[': ']', '(': ')'}
 def extract_structure(lines):
@@ -218,4 +217,4 @@ def full_tokenize(lines):
     if contstr:                            # continued string
         yield TokenInfo(tokenize.ERRORTOKEN, contstr, strstart, (lnum, max), contline)
 
-__all__ = ['extract_structure', 'full_tokenize']
+__all__ = ['extract_structure', 'full_tokenize', 'get_until_eol']

@@ -1,6 +1,7 @@
 import contextlib
 import itertools
 import collections
+from xml.sax.saxutils import escape as escape_xml
 
 class Stack:
     _indent = ' ' * 2
@@ -46,10 +47,14 @@ class Stack:
     def indented(self, string):
         return '{}{}'.format(self.indent * self._indent, string)
     
-    def add_text(self, text):
+    def add_text(self, text, escape = False):
+        if escape:
+            text = escape_xml(str(text))
         self.text.append(self.indented(text))
     
-    def add_comment(self, comment):
+    def add_comment(self, comment, escape = False):
+        if escape:
+            comment = escape_xml(comment)
         self.text.append(self.indented('<!--{} -->'.format(comment)))
     
     @contextlib.contextmanager

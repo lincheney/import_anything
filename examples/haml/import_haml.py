@@ -12,6 +12,7 @@ import import_anything
 from import_anything import utils
 import itertools
 import re
+import tokenize
 
 class HamlCompiler(import_anything.Compiler):
     def __init__(self, *args, **kwargs):
@@ -19,6 +20,12 @@ class HamlCompiler(import_anything.Compiler):
         print(self.get_source(original_numbers = True))
     
     def parse_html_attributes(self, string):
+        """
+        parse html style attributes
+        e.g. (id=5 class=visible)
+        Yields key,value pairs
+        """
+        
         string = string[1:-1]
         while string:
             index = string.find('=')
@@ -42,6 +49,10 @@ class HamlCompiler(import_anything.Compiler):
     
     @utils.complete_blocks()
     def translate(self, file, block):
+        """
+        keep track of line numbers automatically
+        """
+        
         self.lineno = 0
         def line_generator():
             for lineno, line in enumerate(file, 1):
@@ -50,6 +61,11 @@ class HamlCompiler(import_anything.Compiler):
         
         for line in self._translate(line_generator(), block):
             yield self.lineno, line
+    
+    def get_multiline(self, lines):
+        eol = (tokenize.ENDMARKER, tokenize.NEWLINE)
+        tokens = utils.get_until_eol(utils.full_tokenize(lines), eol)
+        return ''.join(t.string for t in tokens)
     
     def _translate(self, _lines, block):
         # wrap all the code in a _render function
@@ -78,8 +94,10 @@ class HamlCompiler(import_anything.Compiler):
                     elif prefix == '#':
                         ids.append(name)
                 
+                # default to div
                 tag = tag or 'div'
                 
+                # extract the attributes, both dict- and html-style
                 attributes = []
                 while string and string[0] in ('{', '('):
                     gen = itertools.chain([string + '\n'], _lines)
@@ -91,11 +109,13 @@ class HamlCompiler(import_anything.Compiler):
                         attrs = '{' + attrs + '}'
                     attributes.append(attrs)
                 
+                # void tag
                 void = False
                 if string.startswith('/'):
                     string = string[1:]
                     void = True
                 
+                # assign all the attributes
                 if attributes:
                     yield utils.indent(indent, 'attributes = {}')
                     for a in attributes:
@@ -105,7 +125,9 @@ class HamlCompiler(import_anything.Compiler):
                 
                 # the text
                 if string.startswith('='):
-                    string = string[1:]
+                    # make sure to handle multiline code
+                    gen = itertools.chain([string[1:] + '\n'], _lines)
+                    string = ''.join(self.get_multiline(gen))
                 else:
                     string = repr(string)
                 
@@ -120,21 +142,26 @@ class HamlCompiler(import_anything.Compiler):
                 yield block(line)
             
             elif line.startswith('/'):
+                # comment
                 if line[1:].strip():
+                    # one line comment
                     yield utils.indent(indent, 'stack.add_comment({!r})', line[1:])
                 else:
+                    # comment with nested text
                     yield block(utils.indent(indent, 'with stack.add_comment_tag():'))
+            
+            elif line.startswith('='):
+                # python code; make sure to handle multiline code
+                gen = itertools.chain([line[1:] + '\n'], _lines)
+                line = ''.join(self.get_multiline(gen))
+                yield utils.indent(indent, 'stack.add_text({}, escape = True)', line)
             
             else:
                 # text line
-                if line.startswith('='):
+                if line.startswith('\\'):
                     line = line[1:]
-                elif line.startswith('\\'):
-                    line = repr(line[1:])
-                else:
-                    line = repr(line)
                 
-                yield utils.indent(indent, 'stack.add_text({})', line)
+                yield utils.indent(indent, 'stack.add_text({!r})', line)
         
         self.lineno += 1
         # render the tags
@@ -156,5 +183,7 @@ if __name__ == '__main__':
         href = '/index.html#more-stuff',
         link = dict(href = '#'),
         article = dict(number = 27, visibility = 'visible'),
+        link_to_remote = lambda *a, **kwa: None,
+        product = dict(id = 3),
     )
     print(haml)

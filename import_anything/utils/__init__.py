@@ -19,4 +19,4 @@ def strip_indents(string):
     return (len(string) - len(rest)), rest
 
 from .complete_blocks import *
-from .tokenizer import full_tokenize, extract_structure
+from .tokenizer import *
