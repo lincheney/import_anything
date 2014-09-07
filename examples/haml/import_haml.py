@@ -21,7 +21,12 @@ class HamlCompiler(import_anything.Compiler):
     def parse_html_attributes(self, string):
         string = string[1:-1]
         while string:
-            key = string[:string.find('=')]
+            index = string.find('=')
+            if index == -1:
+                yield string, 'True'
+                return
+            
+            key = string[:index]
             string = string[len(key) + 1:]
             key = key.strip()
             
@@ -124,6 +129,7 @@ import_anything.Finder.register(loader, ['.haml'])
 
 if __name__ == '__main__':
     import main_haml
+    
     haml = main_haml.render(
         title = 'MyPage',
         item = dict(type = 'massive', number = 4, urgency = 'urgent'),
