@@ -47,10 +47,13 @@ class Stack:
     def indented(self, string):
         return '{}{}'.format(self.indent * self._indent, string)
     
+    def indent_text(self, text):
+        return ''.join(self.indented(i) for i in text.splitlines(True))
+    
     def add_text(self, text, escape = True):
         if escape:
             text = escape_html(str(text))
-        self.text.append(self.indented(text))
+        self.text.append(self.indent_text(text))
     
     def add_comment(self, comment):
         self.text.append(self.indented('<!--{} -->'.format(comment)))
@@ -95,6 +98,7 @@ class Stack:
         if inline_text:
             if escape:
                 text = escape_html(str(text))
+            text = self.indent_text(text).lstrip()
             self.text[-1] = '{}{}{}'.format(open_tag, text, close_tag)
         
         elif void or name in self.VOID_ELEMENTS:
