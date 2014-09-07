@@ -65,8 +65,7 @@ class Stack:
         self.indent -= 1
         self.text.append(self.indented('-->'))
     
-    @contextlib.contextmanager
-    def add_tag(self, name, text, classes, ids, attributes, void, escape = True):
+    def add_tag(self, name, text, classes, ids, attributes, void = False, escape = True, inline_text = False):
         attributes = attributes or {}
         
         cls = ' '.join(self.combine_attribute('class', classes, attributes))
@@ -90,35 +89,34 @@ class Stack:
         attributes_string = ''.join(attributes_list)
         
         # place holder for open tag
-        index = len(self.text)
         self.text.append(None)
-        
-        self.indent += 1
-        if text != '':
-            if escape:
-                text = escape_xml(str(text))
-            self.text.append(self.indented(text))
-        
-        yield
-        
-        self.indent -= 1
-        
-        if len(self.text) == index + 1:
-            if void or name in self.VOID_ELEMENTS:
-                self.text[index] = self.indented('<{}{}>'.format(name, attributes_string))
-            else:
-                self.text[index] = self.indented('<{}{}></{}>'.format(name, attributes_string, name))
-            return
         
         open_tag = self.indented('<{}{}>'.format(name, attributes_string))
         close_tag = '</{}>'.format(name)
         
-        if len(self.text) == index + 2 and text != '' and not self.is_tag(index + 1):
-            # only one text child
-            self.text[index + 1] = '{}{}{}'.format(open_tag, self.text[index + 1].lstrip(), close_tag)
+        if void or name in self.VOID_ELEMENTS:
+            self.text[-1] = self.indented('<{}{}>'.format(name, attributes_string))
         
         else:
-            # some child is a tag
+            if escape:
+                text = escape_xml(str(text))
+            self.text[-1] = '{}{}{}'.format(open_tag, text, close_tag)
+        
+        return open_tag, close_tag, attributes_string
+    
+    @contextlib.contextmanager
+    def add_tag_context(self, name, *args, **kwargs):
+        open_tag, close_tag, attributes_string = self.add_tag(name, *args, **kwargs)
+        index = len(self.text) - 1
+        
+        self.indent += 1
+        yield
+        self.indent -= 1
+        
+        if len(self.text) == index + 1:
+            self.text[index] = self.indented('<{}{}></{}>'.format(name, attributes_string, name))
+        
+        else:
             # put open tag in placeholder
             self.text[index] = open_tag
             self.text.append(self.indented(close_tag))

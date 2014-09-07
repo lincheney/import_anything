@@ -125,15 +125,23 @@ class HamlCompiler(import_anything.Compiler):
                 
                 # the text
                 escape = False
+                inline_text = True
                 if string.startswith('='):
                     # make sure to handle multiline code
                     gen = itertools.chain([string[1:] + '\n'], _lines)
                     string = ''.join(self.get_multiline(gen))
                     escape = True
                 else:
+                    string = string.lstrip()
+                    inline_text = bool(string)
                     string = repr(string)
                 
-                template = 'with stack.add_tag({tag!r}, {text}, {classes!r}, {ids!r}, void = {void!r}, attributes = attributes, escape = {escape}):'
+                if void or inline_text:
+                    template = 'stack.add_tag({tag!r}, {text}, {classes!r}, {ids!r}, void = {void!r}, attributes = attributes, escape = {escape})'
+                
+                else:
+                    template = 'with stack.add_tag_context({tag!r}, {text}, {classes!r}, {ids!r}, attributes = attributes, escape = {escape}):'
+                
                 line = utils.indent(indent, template,
                     tag = tag,
                     text = string,
@@ -141,8 +149,11 @@ class HamlCompiler(import_anything.Compiler):
                     ids = tuple(ids),
                     void = void,
                     escape = escape,
+                    inline_text = inline_text,
                 )
-                yield block(line)
+                if not (void or inline_text):
+                    line = block(line)
+                yield line
             
             elif line.startswith('/'):
                 # comment
