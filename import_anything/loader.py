@@ -13,7 +13,9 @@ class Loader(importlib.machinery.SourceFileLoader):
     to set default values to Loader.__init__
     
     If _recompile is true, the loader will recompile the source
-    every time and ignore cached bytecode
+    every time and ignore cached bytecode. If you are in the
+    midst of developing a compiler, you are better off setting
+    this option than changing the magic all the time
     
     When compiler.MAGIC is set:
         the magic number in the saved bytecode is XORed with the compiler.MAGIC

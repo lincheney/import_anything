@@ -9,6 +9,18 @@ class Compiler:
     
     Subclasses should reimplement the .translate method
     and possibly set the MAGIC and MAGIC_TAG values
+    
+    MAGIC_TAG is used to differentiate between different
+    compilers. The tag is used as part of the filename of
+    the cached bytecode.
+    It should be a string
+    
+    MAGIC is used to specify the 'version' of your compiler.
+    If the MAGIC on your compiler changes, bytecode files
+    with old MAGIC numbers will be recompiled.
+    It should be a 16-bit unsigned integer (max 65535).
+    
+    In general, you should use both MAGIC and MAGIC_TAG.
     """
     
     MAGIC = None
