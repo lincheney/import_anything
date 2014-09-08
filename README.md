@@ -34,7 +34,11 @@ The above code will look for `your_custom_module.custom-py` or `your_custom_modu
 
 `Compiler.translate` should yield `(line-number, line-of-python)`. The line-number refers to the line in the original untranslated file; this is what allows you to get tracebacks that actually show the correct line.
 
-You can find some examples under examples/.
+You can find some examples under examples/, and from top-level, run (for example):
+
+```
+python -m examples.haml
+```
 
 ## Bytecode recompiling
 
