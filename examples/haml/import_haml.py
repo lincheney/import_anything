@@ -13,9 +13,10 @@ from import_anything import utils
 import itertools
 import re
 import tokenize
+from .haml_renderer import Stack
 
 class HamlCompiler(import_anything.Compiler):
-    MAGIC = 50
+    MAGIC = 51
     MAGIC_TAG = 'haml'
     
     def __init__(self, *args, **kwargs):
@@ -212,23 +213,3 @@ def render(**kwargs):
 
 loader = import_anything.Loader.factory(compiler = HamlCompiler)
 import_anything.Finder.register(loader, ['.haml'])
-
-if __name__ == '__main__':
-    from haml_renderer import Stack
-    import main_haml
-    
-    haml = main_haml.render(
-        title = 'MyPage',
-        item = dict(type = 'massive', number = 4, urgency = 'urgent'),
-        sortcol = None,
-        sortdir = '/tmp',
-        href = '/index.html#more-stuff',
-        link = dict(href = '#'),
-        article = dict(number = 27, visibility = 'visible'),
-        link_to_remote = lambda *a, **kwa: None,
-        product = dict(id = 3),
-    )
-    print(haml)
-
-else:
-    from .haml_renderer import Stack
