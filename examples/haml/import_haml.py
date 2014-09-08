@@ -15,6 +15,9 @@ import re
 import tokenize
 
 class HamlCompiler(import_anything.Compiler):
+    MAGIC = 50
+    MAGIC_TAG = 'haml'
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         print(self.get_source(original_numbers = True))
@@ -207,7 +210,7 @@ def render(**kwargs):
     return eval(_render.__code__, kwargs)
 '''
 
-loader = import_anything.Loader.factory(compiler = HamlCompiler, recompile = True)
+loader = import_anything.Loader.factory(compiler = HamlCompiler)
 import_anything.Finder.register(loader, ['.haml'])
 
 if __name__ == '__main__':
