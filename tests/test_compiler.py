@@ -53,6 +53,25 @@ class TestCompiler(unittest.TestCase):
         self.assertEqual(compiler.data, '\n'.join(lines))
         self.assertEqual(compiler.line_numbers, [0] + lineno + [3])
     
+    @mock.patch.object(Compiler, 'translate')
+    def test__init__iostring(self, translate):
+        """
+        the constructor should handle file-like objects
+        """
+        import io
+        
+        lines = ['line #1', 'line #2']
+        lineno = [1, 2]
+        translate.return_value = zip(lineno, lines)
+        
+        file = io.StringIO('\n'.join(lines))
+        compiler = Compiler(file)
+        
+        translate.assert_called_once_with(file)
+        self.assertEqual(compiler.path, '<string>')
+        self.assertEqual(compiler.data, '\n'.join(lines))
+        self.assertEqual(compiler.line_numbers, [0] + lineno)
+    
     def test_make_ast_tree(self):
         """
         .make_ast_tree() should return an AST tree with modified line numbers

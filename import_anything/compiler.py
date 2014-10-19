@@ -1,5 +1,6 @@
 import ast
 import re
+import io
 import linecache
 import tokenize
 
@@ -26,15 +27,19 @@ class Compiler:
     MAGIC = None
     MAGIC_TAG = None
     
-    def __init__(self, path):
+    def __init__(self, file):
         """
         Performs the translation on __init__
         
-        @path:      the path to the file to translate
+        @file:      either the path to a file to translate or a file-like
+                    object, in which case the will be '<string>'
         """
         
-        self.path = path
-        file = self.open(path)
+        if isinstance(file, str):
+            self.path = file
+            file = self.open(self.path)
+        else:
+            self.path = '<string>'
         
         lines = []
         self.line_numbers = [0]
@@ -51,6 +56,13 @@ class Compiler:
         """
         
         return tokenize.open(path)
+    
+    @classmethod
+    def eval(cls, string):
+        compiled = cls(io.StringIO(string))
+        tree = compiled.make_ast_tree()
+        code = compile(tree, compiled.path, 'exec')
+        return eval(code)
     
     def make_ast_tree(self):
         """
