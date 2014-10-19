@@ -17,6 +17,7 @@
 
     %h1
       Backslash escapes
+    %div
       \% percent
       \= equals sign
       \\ backslash
@@ -28,7 +29,7 @@
     
     %h1
       Attributes
-
+    %div
       %tag{'attribute-style': '{}-style'}
       {}-style attributes must be in Python style, not Ruby
       %tag(attribute-style='html-style')
@@ -54,6 +55,7 @@
 
     %h1
       Void tags
+    %div
       %tag.void/
       %tag.void{'with': 'attributes'}/
       %h2
@@ -65,6 +67,7 @@
 
     %h1
       Evaluated Python code
+    %div
       = 'this code will be evaluated ' + 'and inserted'
       - 'this will only be evaluated'
       %p= ' '.join(['python', 'in', 'a', 'tag'])
@@ -80,3 +83,12 @@
         'automatic multiline',
         'python statements',
       ))
+
+    %h1
+      Accessing variables
+    %div
+      %p= a_string_passed_into_render
+      %p= another_var
+      %ul
+        - for string in list_variable:
+            %li= string
