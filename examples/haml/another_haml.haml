@@ -1,0 +1,8 @@
+%p A Haml file that is inserted into another
+%p It should appear with correct indentation
+%p
+    Variables from the parent, such as
+    %dl
+        %dt a_string_passed_into_render
+        %dl= a_string_passed_into_render
+    are propagated

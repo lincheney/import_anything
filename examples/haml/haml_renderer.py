@@ -123,5 +123,8 @@ class Stack:
         elif name not in self.VOID_ELEMENTS:
             self.text[index] = '{}{}'.format(open_tag, close_tag)
     
+    def extend(self, stack):
+        self.text.extend(self.indented(i) for i in stack.text)
+    
     def render(self):
         return '\n'.join(i for i in self.text if i is not None)

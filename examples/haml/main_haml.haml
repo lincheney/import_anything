@@ -92,3 +92,11 @@
       %ul
         - for string in list_variable:
             %li= string
+
+    %h1
+      Sub-rendering
+    %div
+      - from . import another_haml
+      Rendering another haml file here:
+      .inserted_haml
+        - __render__(another_haml)

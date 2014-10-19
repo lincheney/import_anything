@@ -16,7 +16,7 @@ import tokenize
 from .haml_renderer import Stack
 
 class HamlCompiler(import_anything.Compiler):
-    MAGIC = 51
+    MAGIC = 52
     MAGIC_TAG = 'haml'
     
     def __init__(self, *args, **kwargs):
@@ -203,13 +203,23 @@ class HamlCompiler(import_anything.Compiler):
         
         self.lineno += 1
         # render the tags
-        yield utils.indent(2, 'return __stack.render()')
+        yield utils.indent(2, 'return __stack')
         # magic to allow using **kwargs as if they were locals
         yield '''
 def render(**kwargs):
-    kwargs['__stack'] = Stack()
-    return eval(_render.__code__, kwargs)
+    kwargs.setdefault('__stack', Stack())
+    kwargs['__package__'] = __package__
+    kwargs['__name__'] = __name__
+    kwargs['__render__'] = lambda x: x.subrender(**kwargs)
+    return eval(_render.__code__, kwargs).render()
+
+def subrender(*, __stack, **kwargs):
+    kwargs.setdefault('__stack', Stack())
+    kwargs['__package__'] = __package__
+    kwargs['__name__'] = __name__
+    kwargs['__render__'] = lambda x: x.subrender(**kwargs)
+    __stack.extend(eval(_render.__code__, kwargs))
 '''
 
-loader = import_anything.Loader.factory(compiler = HamlCompiler)
+loader = import_anything.Loader.factory(compiler = HamlCompiler, recompile = False)
 import_anything.Finder.register(loader, ['.haml'])
