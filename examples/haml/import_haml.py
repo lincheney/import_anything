@@ -16,7 +16,7 @@ import tokenize
 from .haml_renderer import Stack
 
 class HamlCompiler(import_anything.Compiler):
-    MAGIC = 52
+    MAGIC = 53
     MAGIC_TAG = 'haml'
     
     def __init__(self, *args, **kwargs):
@@ -89,7 +89,7 @@ class HamlCompiler(import_anything.Compiler):
                 if line.startswith('%'):
                     line = line[1:]
                 
-                tag, string = re.match(r'([\w.#]*)(.*)', line.lstrip()).groups()
+                tag, string = re.match(r'([\w.#-]*)(.*)', line.lstrip()).groups()
                 
                 # extract the .class#id
                 classes = []
