@@ -18,7 +18,7 @@ def complete_blocks(indent_by = 4, body = 'pass'):
 
     normal_line
     def start_a_block():
-    pass
+      pass
     unexpected_dedent
 
     """
